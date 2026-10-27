@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conway Studio ∞</title>
+<style>
+:root {
+  --bg:#101218;
+  --panel:#1b1f2a;
+  --border:#353b4b;
+  --button:#292f3d;
+  --accent:#3b8e7d;
+  --text:#edf0f7;
+  --muted:#aab4c8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,sans-serif;overflow:hidden}
+button,select,input,textarea{font:inherit}
+button,select{
+  background:var(--button);color:var(--text);border:1px solid var(--border);
+  border-radius:6px;padding:7px 9px;cursor:pointer
+}
+button:hover{background:#3a4356}
+button.active{background:#28685e;border-color:#65d9b9}
+button:disabled{opacity:.4;cursor:not-allowed}
+input[type=color]{width:34px;height:30px;padding:1px;background:var(--button);border:1px solid var(--border);border-radius:5px}
+input[type=range]{width:90px;vertical-align:middle}
+header{
+  position:fixed;z-index:5;top:0;left:0;right:0;
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  padding:9px;background:#1b1f2af5;border-bottom:1px solid var(--border)
+}
+.group{display:flex;align-items:center;gap:5px}
+label{display:flex;align-items:center;gap:5px}
+#world{display:block;touch-action:none;cursor:crosshair}
+#status{font-size:12px;color:var(--muted)}
+#bottomLeft{
+  position:fixed;bottom:12px;left:12px;z-index:4;
+  display:flex;gap:5px;padding:7px;background:#1b1f2aeF;
+  border:1px solid var(--border);border-radius:9px
+}
+#bottomRight{
+  position:fixed;bottom:12px;right:12px;z-index:4;
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:#1b1f2aeF;border:1px solid var(--border);border-radius:9px
+}
+#noPaint{
+  width:35px;height:35px;border:2px solid #687083;border-radius:5px;
+  background:#191c24;display:grid;place-items:center;font-size:20px
+}
+#noPaint.active{outline:2px solid #66e5c0}
+#help{
+  position:fixed;bottom:65px;left:12px;z-index:2;pointer-events:none;
+  background:#1b1f2ad9;color:var(--muted);padding:7px 10px;border-radius:6px;
+  font-size:11px
+}
+#codePanel{
+  position:fixed;z-index:8;top:100px;right:12px;bottom:60px;
+  width:min(460px,calc(100vw - 24px));display:none;flex-direction:column;
+  background:#171b24;border:1px solid #41495b;border-radius:10px;
+  padding:12px;box-shadow:0 8px 40px #0009
+}
+#codePanel.open{display:flex}
+#code{flex:1;min-height:100px;resize:none;background:#0e1118;color:#c4f5dc;
+  border:1px solid var(--border);border-radius:6px;padding:10px;
+  font:12px/1.5 ui-monospace,monospace}
+#panelButtons{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#toast{position:fixed;z-index:10;top:100px;left:50%;transform:translateX(-50%);
+  background:#242b39;border:1px solid #4b566c;border-radius:8px;
+  padding:9px 14px;display:none;max-width:90vw}
+@media(max-width:700px){
+  header{max-height:38vh;overflow:auto}
+  #help{display:none}
+  #status{width:100%}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <strong>Conway Studio ∞</strong>
+  <button id="play">▶ Jugar</button>
+  <button id="step">Paso</button>
+  <button id="random">Aleatorio</button>
+  <button id="clear">Limpiar</button>
+  <button id="home">Centrar</button>
+
+  <span class="group">
+    <button data-tool="brush" class="active">🖌️ Pincel</button>
+    <button data-tool="eraser">🧽 Borrador</button>
+    <button data-tool="bucket">🪣 Cubeta</button>
+    <button data-tool="select">▧ Selección</button>
+  </span>
+
+  <span class="group">
+    <button data-tool="line">╱ Línea</button>
+    <button data-tool="rect">▱ Rectángulo</button>
+    <button data-tool="ellipse">◯ Elipse</button>
+  </span>
+
+  <label>Color <input id="color" type="color" value="#54e6a5"></label>
+  <label>Tamaño <input id="brushSize" type="range" min="1" max="20" value="1"><span id="sizeValue">1</span></label>
+
+  <label>Forma
+    <select id="shapeMode">
+      <option value="outline">Contorno</option>
+      <option value="filled">Rellena</option>
+    </select>
+  </label>
+
+  <label>Cubeta
+    <select id="bucketMode">
+      <option value="state">Región por estado</option>
+      <option value="color">Región por color</option>
+    </select>
+  </label>
+
+  <label>Patrón
+    <select id="pattern">
+      <option value="glider">Planeador (Glider)</option>
+      <option value="lwss">Nave ligera (LWSS)</option>
+      <option value="block">Bloque estable</option>
+      <option value="beehive">Colmena estable</option>
+      <option value="blinker">Parpadeador</option>
+      <option value="toad">Sapo</option>
+      <option value="beacon">Baliza</option>
+      <option value="pulsar">Pulsar</option>
+      <option value="gosper">Gosper Glider Gun</option>
+      <option value="rPentomino">R-pentominó</option>
+      <option value="diehard">Diehard</option>
+      <option value="acorn">Acorn</option>
+    </select>
+  </label>
+  <button id="placePattern">＋ Colocar patrón</button>
+  <button id="openCode">Código .conway</button>
+  <span id="status">Preparado</span>
+</header>
+
+<canvas id="world"></canvas>
+
+<div id="help">
+  Izquierdo: herramienta (No pintar: mover cámara) · Derecho: mover cámara · Q/E: zoom ·
+  Espacio: jugar · Esc: cancelar · Ctrl+Z: deshacer · Ctrl+Shift+Z: rehacer
+</div>
+
+<div id="bottomLeft">
+  <button id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+  <button id="redo" title="Rehacer (Ctrl+Shift+Z)">↷</button>
+  <button id="copy" title="Copiar selección (Ctrl+C)">Copiar</button>
+  <button id="paste" title="Pegar (Ctrl+V)">Pegar</button>
+</div>
+
+<div id="bottomRight">
+  <span style="color:var(--muted);font-size:12px">No pintar</span>
+  <button id="noPaint" title="Herramienta de no pintar" aria-label="No pintar">◻</button>
+</div>
+
+<div id="codePanel">
+  <strong>Lenguaje Conway</strong>
+  <p style="color:var(--muted);font-size:12px;margin:5px 0 9px">
+    Edita un patrón, genera código desde una selección o importa código.
+    Los comentarios compactos permiten conservar los colores originales.
+  </p>
+  <textarea id="code" spellcheck="false"></textarea>
+  <div id="panelButtons">
+    <button id="generate">Generar desde selección</button>
+    <button id="copyCode">Copiar código</button>
+    <button id="importCode">Preparar para pegar</button>
+    <button id="closeCode">Cerrar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+
+const $ = id => document.getElementById(id);
+const canvas = $("world");
+const ctx = canvas.getContext("2d");
+
+const palette = [
+  "#ff595e","#ff924c","#ffca3a","#c5f550",
+  "#52e5a0","#35c9ff","#537bff","#9b5de5",
+  "#f15bb5","#ffffff"
+];
+
+const patterns = {
+  glider: [
+    ".O.",
+    "..O",
+    "OOO"
+  ],
+  lwss: [
+    ".O..O.",
+    "O.....O",
+    "O......",
+    "OOOO... "
+  ],
+  block: [
+    "OO",
+    "OO"
+  ],
+  beehive: [
+    ".OO.",
+    "O..O",
+    ".OO."
+  ],
+  blinker: [
+    "OOO"
+  ],
+  toad: [
+    ".OOO",
+    "OOO."
+  ],
+  beacon: [
+    "OO..",
+    "OO..",
+    "..OO",
+    "..OO"
+  ],
+  pulsar: [
+    "..OOO...OOO..",
+    ".............",
+    "O....O.O....O",
+    "O....O.O....O",
+    "O....O.O....O",
+    "..OOO...OOO..",
+    ".............",
+    "..OOO...OOO..",
+    "O....O.O....O",
+    "O....O.O....O",
+    "O....O.O....O",
+    ".............",
+    "..OOO...OOO.."
+  ],
+  gosper: [
+    "........................O...........",
+    "......................O.O...........",
+    "............OO......OO............OO",
+    "...........O...O....OO............OO",
+    "OO........O.....O...OO...............",
+    "OO........O...O.OO....O.O.............",
+    "..........O.....O.......O.............",
+    "...........O...O......................",
+    "............OO........................"
+  ],
+  rPentomino: [
+    ".OO",
+    "OO.",
+    ".O."
+  ],
+  diehard: [
+    "......O.",
+    "OO......",
+    ".O...OOO"
+  ],
+  acorn: [
+    ".O.....",
+    "...O...",
+    "OO..OOO"
+  ]
+};
+
+// Correct complete Gosper Glider Gun in coordinate form,
+// normalized to its minimum x/y.
+patterns.gosperCoords = [
+  [24,0],[22,1],[24,1],
+  [12,2],[13,2],[20,2],[21,2],[34,2],[35,2],
+  [11,3],[15,3],[20,3],[21,3],[34,3],[35,3],
+  [0,4],[1,4],[10,4],[16,4],[20,4],[21,4],
+  [0,5],[1,5],[10,5],[14,5],[16,5],[17,5],[22,5],[24,5],
+  [10,6],[16,6],[24,6],
+  [11,7],[15,7],
+  [12,8],[13,8],
+  [22,10],[24,10],
+  [22,11],[23,11],
+  [22,12],[24,12],
+  [23,13],
+  [12,14],[13,14],
+  [11,15],[15,15],
+  [10,16],[16,16],
+  [10,17],[14,17],[16,17],[17,17],
+  [10,18],[16,18],
+  [11,19],[15,19],
+  [12,20],[13,20]
+];
+
+let cells = new Map();
+let cellSize = 20;
+let cameraX = 0, cameraY = 0;
+let running = false, timer = null;
+let tool = "brush";
+
+let drawing = false, panning = false;
+let lastPoint = null;
+let gestureBefore = null;
+let gestureChanged = false;
+
+let selection = null;
+let selectionStart = null;
+let shapeStart = null;
+let shapeEnd = null;
+let pastePreview = null;
+let pendingPattern = null;
+
+let undoStack = [];
+let redoStack = [];
+const HISTORY_LIMIT = 80;
+const MAX_CELLS = 500000;
+const MAX_PATTERN_DIMENSION = 2000;
+const MAX_BUCKET_VISITS = 100000;
+
+const key = (x,y) => `${x},${y}`;
+const parseKey = k => k.split(",").map(Number);
+const worldAt = (x,y) => ({
+  x:Math.floor((x-cameraX)/cellSize),
+  y:Math.floor((y-cameraY)/cellSize)
+});
+const screenAt = (x,y) => ({
+  x:cameraX+x*cellSize,
+  y:cameraY+y*cellSize
+});
+
+function toast(message) {
+  const el=$("toast");
+  el.textContent=message;
+  el.style.display="block";
+  clearTimeout(toast.timer);
+  toast.timer=setTimeout(()=>el.style.display="none",2300);
+}
+
+function snapshot() {
+  return new Map(cells);
+}
+
+function saveUndo(before=snapshot()) {
+  undoStack.push(before);
+  if(undoStack.length>HISTORY_LIMIT)undoStack.shift();
+  redoStack.length=0;
+  updateHistoryButtons();
+}
+
+function updateHistoryButtons() {
+  $("undo").disabled=!undoStack.length;
+  $("redo").disabled=!redoStack.length;
+}
+
+function undo() {
+  if(!undoStack.length)return;
+  redoStack.push(snapshot());
+  cells=undoStack.pop();
+  render();
+  updateHistoryButtons();
+}
+
+function redo() {
+  if(!redoStack.length)return;
+  undoStack.push(snapshot());
+  cells=redoStack.pop();
+  render();
+  updateHistoryButtons();
+}
+
+function beginGesture() {
+  if(!gestureBefore)gestureBefore=snapshot();
+  gestureChanged=true;
+}
+
+function finishGesture() {
+  if(gestureBefore&&gestureChanged)saveUndo(gestureBefore);
+  gestureBefore=null;
+  gestureChanged=false;
+  updateHistoryButtons();
+}
+
+function resize() {
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(innerWidth*dpr);
+  canvas.height=Math.round(innerHeight*dpr);
+  canvas.style.width=innerWidth+"px";
+  canvas.style.height=innerHeight+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  render();
+}
+
+function render() {
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  ctx.fillStyle="#101218";
+  ctx.fillRect(0,0,innerWidth,innerHeight);
+
+  if(cellSize>=8) {
+    ctx.strokeStyle="#252a35";
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    const sx=((cameraX%cellSize)+cellSize)%cellSize;
+    const sy=((cameraY%cellSize)+cellSize)%cellSize;
+    for(let x=sx;x<innerWidth;x+=cellSize){ctx.moveTo(x,0);ctx.lineTo(x,innerHeight);}
+    for(let y=sy;y<innerHeight;y+=cellSize){ctx.moveTo(0,y);ctx.lineTo(innerWidth,y);}
+    ctx.stroke();
+  }
+
+  for(const [k,color] of cells) {
+    const [x,y]=parseKey(k);
+    const p=screenAt(x,y);
+    if(p.x+cellSize<0||p.y+cellSize<0||p.x>innerWidth||p.y>innerHeight)continue;
+    ctx.fillStyle=color;
+    ctx.fillRect(p.x+1,p.y+1,Math.max(1,cellSize-2),Math.max(1,cellSize-2));
+  }
+
+  if(selection) {
+    const s=selection;
+    ctx.strokeStyle="#f8e16a";
+    ctx.lineWidth=2;
+    ctx.setLineDash([5,4]);
+    const p=screenAt(s.x,s.y);
+    ctx.strokeRect(p.x,p.y,s.w*cellSize,s.h*cellSize);
+    ctx.setLineDash([]);
+  }
+
+  if(selectionStart) {
+    const end=selectionEnd||selectionStart;
+    const x=Math.min(selectionStart.x,end.x);
+    const y=Math.min(selectionStart.y,end.y);
+    const w=Math.abs(end.x-selectionStart.x)+1;
+    const h=Math.abs(end.y-selectionStart.y)+1;
+    const p=screenAt(x,y);
+    ctx.strokeStyle="#ffe36e";
+    ctx.lineWidth=2;
+    ctx.setLineDash([5,4]);
+    ctx.strokeRect(p.x,p.y,w*cellSize,h*cellSize);
+    ctx.setLineDash([]);
+  }
+
+  if(shapeStart&&shapeEnd&&(tool==="line"||tool==="rect"||tool==="ellipse")) {
+    const pts=makeShape(shapeStart,shapeEnd,tool,$("shapeMode").value);
+    drawPreview(pts,$("color").value);
+  }
+
+  if(pastePreview) {
+    const p=pastePreview;
+    drawPreview(p.cells.map(c=>[p.x+c.x,p.y+c.y]),null,p.cells);
+  }
+
+  if(pendingPattern) {
+    const p=pendingPattern;
+    drawPreview(p.cells.map(c=>[p.x+c.x,p.y+c.y]),null,p.cells);
+  }
+
+  const selected=selection?` · Selección ${selection.w}×${selection.h}`:"";
+  $("status").textContent=`Células: ${cells.size} · Zoom: ${cellSize.toFixed(1)}px${selected}`;
+}
+
+let selectionEnd=null;
+
+function drawPreview(points,color,entries=null) {
+  ctx.globalAlpha=.7;
+  if(entries) {
+    for(const c of entries) {
+      const p=screenAt(c.x+(pastePreview?pastePreview.x:pendingPattern.x),
+                       c.y+(pastePreview?pastePreview.y:pendingPattern.y));
+      ctx.fillStyle=c.color;
+      ctx.fillRect(p.x+1,p.y+1,Math.max(1,cellSize-2),Math.max(1,cellSize-2));
+    }
+  } else {
+    ctx.fillStyle=color||"#54e6a5";
+    for(const [x,y] of points) {
+      const p=screenAt(x,y);
+      ctx.fillRect(p.x+1,p.y+1,Math.max(1,cellSize-2),Math.max(1,cellSize-2));
+    }
+  }
+  ctx.globalAlpha=1;
+}
+
+function setCell(x,y,color=$("color").value) {
+  if(cells.size>=MAX_CELLS&&!cells.has(key(x,y)))return;
+  cells.set(key(x,y),color);
+}
+
+function paintBrush(x,y,erase=false) {
+  const size=Number($("brushSize").value);
+  const start=-Math.floor((size-1)/2);
+  for(let dx=0;dx<size;dx++)for(let dy=0;dy<size;dy++) {
+    const k=key(x+start+dx,y+start+dy);
+    if(erase)cells.delete(k);
+    else setCell(x+start+dx,y+start+dy);
+  }
+}
+
+function linePoints(a,b) {
+  const pts=[];
+  let x=a.x,y=a.y;
+  const dx=Math.abs(b.x-a.x),sx=a.x<b.x?1:-1;
+  const dy=-Math.abs(b.y-a.y),sy=a.y<b.y?1:-1;
+  let err=dx+dy;
+  while(true) {
+    pts.push([x,y]);
+    if(x===b.x&&y===b.y)break;
+    const e=2*err;
+    if(e>=dy){err+=dy;x+=sx;}
+    if(e<=dx){err+=dx;y+=sy;}
+  }
+  return pts;
+}
+
+function makeShape(a,b,type,mode) {
+  if(type==="line")return linePoints(a,b);
+  const minX=Math.min(a.x,b.x),maxX=Math.max(a.x,b.x);
+  const minY=Math.min(a.y,b.y),maxY=Math.max(a.y,b.y);
+  const out=[];
+  const rx=(maxX-minX)/2,ry=(maxY-minY)/2;
+  const cx=(minX+maxX)/2,cy=(minY+maxY)/2;
+
+  for(let x=minX;x<=maxX;x++)for(let y=minY;y<=maxY;y++) {
+    let inside=true,edge=false;
+    if(type==="rect")edge=x===minX||x===maxX||y===minY||y===maxY;
+    if(type==="ellipse") {
+      if(rx===0||ry===0)edge=true;
+      else {
+        const d=((x-cx)/rx)**2+((y-cy)/ry)**2;
+        inside=d<=1;
+        const irx=Math.max(.01,rx-1),iry=Math.max(.01,ry-1);
+        edge=((x-cx)/irx)**2+((y-cy)/iry)**2>=1;
+      }
+    }
+    if(inside&&(mode==="filled"||edge))out.push([x,y]);
+  }
+  return out;
+}
+
+function getSelectedCells() {
+  if(!selection)return null;
+  const out=[];
+  for(const [k,color] of cells) {
+    const [x,y]=parseKey(k);
+    if(x>=selection.x&&x<selection.x+selection.w&&
+       y>=selection.y&&y<selection.y+selection.h) {
+      out.push({x:x-selection.x,y:y-selection.y,color});
+    }
+  }
+  return {w:selection.w,h:selection.h,cells:out};
+}
+
+function patternData(name) {
+  if(name==="gosper") {
+    const pts=patterns.gosperCoords;
+    return {w:36,h:21,cells:pts.map(([x,y])=>({x,y,color:$("color").value}))};
+  }
+  const rows=patterns[name];
+  const w=Math.max(...rows.map(r=>r.length));
+  const cells=[];
+  rows.forEach((row,y)=>[...row].forEach((ch,x)=>{
+    if(ch==="O")cells.push({x,y,color:$("color").value});
+  }));
+  return {w,h:rows.length,cells};
+}
+
+function placeData(data,x,y,record=true) {
+  if(!data||!Array.isArray(data.cells))return;
+  if(record)beginGesture();
+  for(const c of data.cells) {
+    if(Number.isInteger(c.x)&&Number.isInteger(c.y)&&
+       c.x>=0&&c.y>=0&&c.x<data.w&&c.y<data.h) {
+      setCell(x+c.x,y+c.y,validColor(c.color)?c.color:$("color").value);
+    }
+  }
+  if(record)finishGesture();
+}
+
+function validColor(s) {
+  return typeof s==="string"&&/^#[0-9a-fA-F]{6}$/.test(s);
+}
+
+// Lenguaje Conway:
+// Las filas usan símbolos de un carácter.
+// . representa una celda vacía; cada símbolo vivo puede tener su color.
+// @color define el color de un símbolo.
+// # COMPACT conserva los colores y dimensiones exactos como JSON.
+function encodePattern(data,name="Pattern") {
+  const colors=[...new Set(data.cells.map(c=>c.color))];
+  const symbols="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const colorToSymbol=new Map();
+  const lines=[];
+  colors.slice(0,symbols.length).forEach((color,i)=>{
+    colorToSymbol.set(color,symbols[i]);
+    lines.push(`  @color ${symbols[i]} ${color}`);
+  });
+
+  if(!colors.length)lines.push("  @color O #54e6a5");
+  const rows=[];
+  for(let y=0;y<data.h;y++) {
+    let row="";
+    for(let x=0;x<data.w;x++) {
+      const c=data.cells.find(c=>c.x===x&&c.y===y);
+      row+=c?(colorToSymbol.get(c.color)||"O"):" .".trim();
+    }
+    rows.push("  "+row);
+  }
+
+  const safeName=String(name).replace(/[^a-zA-Z0-9_-]/g,"")||"Pattern";
+  const compact={v:1,w:data.w,h:data.h,cells:data.cells};
+  return [
+    "# CONWAY/1",
+    `pattern ${safeName} {`,
+    ...lines,
+    ...rows,
+    "}"
+  ].join("\n");
+}
+
+function parsePattern(source) {
+  if(typeof source!=="string"||source.length>2_000_000)
+    throw Error("El código está vacío o es demasiado grande.");
+
+  // Preferir el bloque compacto cuando exista para conservar los datos exactos.
+  const compactLine=source.split(/\r?\n/).find(l=>l.startsWith("# COMPACT:"));
+  if(compactLine) {
+    let obj;
+    try { obj=JSON.parse(compactLine.slice("# COMPACT:".length).trim()); }
+    catch { throw Error("El bloque compacto no contiene JSON válido."); }
+
+    if(!obj||obj.v!==1||!Number.isInteger(obj.w)||!Number.isInteger(obj.h)||
+       obj.w<1||obj.h<1||obj.w>MAX_PATTERN_DIMENSION||
+       obj.h>MAX_PATTERN_DIMENSION||!Array.isArray(obj.cells)||
+       obj.cells.length>MAX_CELLS)throw Error("Dimensiones o datos inválidos.");
+
+    const out=[];
+    for(const c of obj.cells) {
+      if(!c||!Number.isInteger(c.x)||!Number.isInteger(c.y)||
+         c.x<0||c.y<0||c.x>=obj.w||c.y>=obj.h)continue;
+      out.push({x:c.x,y:c.y,color:validColor(c.color)?c.color:$("color").value});
+    }
+    return {w:obj.w,h:obj.h,cells:out};
+  }
+
+  const lines=source.split(/\r?\n/);
+  const legend=new Map([["O",$("color").value]]);
+  const rows=[];
+  let inside=false;
+
+  for(let raw of lines) {
+    const line=raw.trim();
+    if(!line)continue;
+
+    // Los comentarios empiezan con # seguido de espacio o al final.
+    // Así, # también puede usarse como símbolo dentro de una fila.
+    if(/^#(?:\s|$)/.test(line))continue;
+
+    if(/^pattern\s+[a-zA-Z0-9_-]+\s*\{$/.test(line)) {
+      inside=true;
+      continue;
+    }
+
+    if(line==="}") {
+      inside=false;
+      continue;
+    }
+
+    if(line.startsWith("@color ")) {
+      const m=line.match(/^@color\s+(\S)\s+(#[0-9a-fA-F]{6})$/u);
+      if(!m)
+        throw Error("Directiva de color inválida: usa @color SÍMBOLO #RRGGBB.");
+
+      if(m[1]===".")
+        throw Error("El punto (.) está reservado para una celda vacía.");
+
+      legend.set(m[1],m[2]);
+      continue;
+    }
+
+    // Cada carácter que no sea espacio puede ser un símbolo de célula.
+    // El punto se reserva para las células vacías.
+    if(/^[^\s]+$/u.test(line)) {
+      rows.push(line);
+      continue;
+    }
+
+    throw Error("Sintaxis no reconocida: "+line.slice(0,60));
+  }
+
+  if(!rows.length)throw Error("No se encontraron filas de células.");
+
+  const w=Math.max(...rows.map(r=>[...r].length));
+  const h=rows.length;
+
+  if(w>MAX_PATTERN_DIMENSION||h>MAX_PATTERN_DIMENSION)
+    throw Error("El patrón es demasiado grande.");
+
+  const out=[];
+
+  rows.forEach((row,y)=>[...row].forEach((ch,x)=>{
+    if(ch===".")return;
+
+    if(!legend.has(ch))
+      throw Error("Símbolo sin color definido: "+ch);
+
+    out.push({x,y,color:legend.get(ch)});
+  }));
+
+  return {w,h,cells:out};
+}
+
+function startPaste(data) {
+  pastePreview={x:0,y:0,cells:data.cells,w:data.w,h:data.h};
+  pendingPattern=null;
+  tool="paste";
+  document.querySelectorAll("[data-tool]").forEach(b=>b.classList.remove("active"));
+  render();
+  toast("Mueve el ratón y haz clic para colocar. Esc cancela.");
+}
+
+function copyText(text) {
+  if(navigator.clipboard&&navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(
+      ()=>toast("Copiado al portapapeles."),
+      ()=>fallbackCopy(text)
+    );
+  }
+  fallbackCopy(text);
+  return Promise.resolve();
+}
+
+function fallbackCopy(text) {
+  const area=document.createElement("textarea");
+  area.value=text;
+  area.style.position="fixed";
+  area.style.opacity="0";
+  document.body.appendChild(area);
+  area.select();
+  let ok=false;
+  try { ok=document.execCommand("copy"); } catch {}
+  area.remove();
+  toast(ok?"Copiado.":"No se pudo acceder al portapapeles; selecciona el texto manualmente.");
+}
+
+async function readClipboard() {
+  if(navigator.clipboard&&navigator.clipboard.readText) {
+    try { return await navigator.clipboard.readText(); }
+    catch {}
+  }
+  return null;
+}
+
+async function copySelection() {
+  const data=getSelectedCells();
+  if(!data){toast("Primero selecciona un rectángulo.");return;}
+  const code=encodePattern(data,"Selection");
+  $("code").value=code;
+  await copyText(code);
+}
+
+async function pasteFromClipboard() {
+  const text=await readClipboard();
+  if(text) {
+    try { startPaste(parsePattern(text));return; }
+    catch(e) { toast("No se pudo leer: "+e.message);return; }
+  }
+  $("codePanel").classList.add("open");
+  $("code").focus();
+  toast("Pega el código en el panel y pulsa «Preparar para pegar».");
+}
+
+function selectTool(next) {
+  tool=next;
+  pastePreview=null;
+  pendingPattern=null;
+  shapeStart=null;
+  shapeEnd=null;
+  selection=null
+  selectionStart=null;
+  selectionEnd=null;
+
+  document.querySelectorAll("[data-tool]").forEach(b=>
+    b.classList.toggle("active",b.dataset.tool===tool));
+
+  $("noPaint").classList.toggle("active",tool==="none");
+  render();
+}
+
+document.querySelectorAll("[data-tool]").forEach(b=>
+  b.addEventListener("click",()=>selectTool(b.dataset.tool)));
+
+$("noPaint").addEventListener("click",()=>selectTool("none"));
+$("brushSize").addEventListener("input",()=>$("sizeValue").textContent=$("brushSize").value);
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+
+canvas.addEventListener("pointerdown",e=>{
+  canvas.setPointerCapture(e.pointerId);
+
+  const p={x:e.clientX,y:e.clientY};
+  const world=worldAt(p.x,p.y);
+
+  if(e.button===2) {
+    panning=true;
+    lastPoint=p;
+    return;
+  }
+
+  if(e.button!==0)return;
+
+  // En modo No pintar, el clic izquierdo mueve el plano.
+  if(tool==="none") {
+    panning=true;
+    lastPoint=p;
+    return;
+  }
+
+  if(tool==="paste"&&pastePreview) {
+    beginGesture();
+    placeData(pastePreview,world.x,world.y,false);
+    finishGesture();
+    pastePreview=null;
+    tool="brush";
+    render();
+    return;
+  }
+
+  if(pendingPattern) {
+    beginGesture();
+    placeData(pendingPattern,world.x,world.y,false);
+    finishGesture();
+    pendingPattern=null;
+    tool="brush";
+    render();
+    return;
+  }
+
+  if(tool==="bucket") {
+    beginGesture();
+    floodFill(world);
+    finishGesture();
+    render();
+    return;
+  }
+
+  if(tool==="select") {
+    selectionStart=world;
+    selectionEnd=world;
+    selection=null;
+    drawing=true;
+    render();
+    return;
+  }
+
+  if(tool==="line"||tool==="rect"||tool==="ellipse") {
+    shapeStart=world;
+    shapeEnd=world;
+    drawing=true;
+    render();
+    return;
+  }
+
+  if(tool==="brush"||tool==="eraser") {
+    beginGesture();
+    drawing=true;
+    lastPoint=world;
+    paintBrush(world.x,world.y,tool==="eraser");
+    render();
+  }
+});
+
+canvas.addEventListener("pointermove",e=>{
+  const p={x:e.clientX,y:e.clientY};
+  const world=worldAt(p.x,p.y);
+
+  if(panning&&lastPoint) {
+    cameraX+=p.x-lastPoint.x;
+    cameraY+=p.y-lastPoint.y;
+    lastPoint=p;
+    render();
+    return;
+  }
+
+  if(pastePreview) {
+    pastePreview.x=world.x;
+    pastePreview.y=world.y;
+    render();
+    return;
+  }
+
+  if(pendingPattern) {
+    pendingPattern.x=world.x;
+    pendingPattern.y=world.y;
+    render();
+    return;
+  }
+
+  if(!drawing)return;
+
+  if(tool==="select") {
+    selectionEnd=world;
+    render();
+    return;
+  }
+
+  if(tool==="line"||tool==="rect"||tool==="ellipse") {
+    shapeEnd=world;
+    render();
+    return;
+  }
+
+  if((tool==="brush"||tool==="eraser")&&lastPoint) {
+    for(const [x,y] of linePoints(lastPoint,world))
+      paintBrush(x,y,tool==="eraser");
+
+    lastPoint=world;
+    render();
+  }
+});
+
+function endPointer() {
+  if(drawing&&tool==="select"&&selectionStart&&selectionEnd) {
+    const x=Math.min(selectionStart.x,selectionEnd.x);
+    const y=Math.min(selectionStart.y,selectionEnd.y);
+
+    selection={
+      x,y,
+      w:Math.abs(selectionEnd.x-selectionStart.x)+1,
+      h:Math.abs(selectionEnd.y-selectionStart.y)+1
+    };
+
+    selectionStart=null;
+    selectionEnd=null;
+  } else if(
+    drawing&&
+    (tool==="line"||tool==="rect"||tool==="ellipse")&&
+    shapeStart&&shapeEnd
+  ) {
+    beginGesture();
+
+    for(const [x,y] of makeShape(
+      shapeStart,shapeEnd,tool,$("shapeMode").value
+    )) {
+      setCell(x,y,$("color").value);
+    }
+
+    finishGesture();
+    shapeStart=null;
+    shapeEnd=null;
+  }
+
+  drawing=false;
+  panning=false;
+  lastPoint=null;
+
+  finishGesture();
+  render();
+}
+
+canvas.addEventListener("pointerup",endPointer);
+canvas.addEventListener("pointercancel",endPointer);
+canvas.addEventListener("lostpointercapture",()=>{
+  drawing=false;
+  panning=false;
+  lastPoint=null;
+});
+
+canvas.addEventListener("wheel",e=>{
+  e.preventDefault();
+  zoom(e.deltaY<0?1.12:1/1.12,e.clientX,e.clientY);
+},{passive:false});
+
+function zoom(factor,x=innerWidth/2,y=innerHeight/2) {
+  const before=worldAt(x,y);
+  cellSize=Math.max(3,Math.min(80,cellSize*factor));
+  cameraX=x-before.x*cellSize;
+  cameraY=y-before.y*cellSize;
+  render();
+}
+
+function floodFill(start) {
+  const startKey=key(start.x,start.y);
+  const startAlive=cells.has(startKey);
+  const targetColor=cells.get(startKey);
+  const mode=$("bucketMode").value;
+
+  if(mode==="color"&&!startAlive)return;
+
+  const replacement=$("color").value;
+  if(mode==="color"&&targetColor===replacement)return;
+
+  const matches=(x,y)=>{
+    const k=key(x,y);
+    return mode==="color"
+      ? cells.has(k)&&cells.get(k)===targetColor
+      : cells.has(k)===startAlive;
+  };
+
+  const queue=[[start.x,start.y]];
+  const visited=new Set([startKey]);
+  let head=0,count=0;
+
+  while(head<queue.length&&count<MAX_BUCKET_VISITS) {
+    const [x,y]=queue[head++];
+    if(!matches(x,y))continue;
+
+    const k=key(x,y);
+
+    if(mode==="color")cells.set(k,replacement);
+    else if(startAlive)cells.delete(k);
+    else cells.set(k,replacement);
+
+    count++;
+
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx=x+dx,ny=y+dy,nk=key(nx,ny);
+      if(visited.has(nk))continue;
+
+      visited.add(nk);
+
+      // Una región vacía infinita necesita límites para poder recorrerse.
+      if(!startAlive&&mode==="state"&&
+        (Math.abs(nx-start.x)>200||Math.abs(ny-start.y)>200))continue;
+
+      queue.push([nx,ny]);
+    }
+  }
+
+  if(count>=MAX_BUCKET_VISITS)
+    toast("Límite de seguridad de la cubeta alcanzado.");
+}
+
+function nextGeneration() {
+  const neighbors=new Map();
+
+  for(const [k,color] of cells) {
+    const [x,y]=parseKey(k);
+
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++) {
+      if(dx===0&&dy===0)continue;
+
+      const nk=key(x+dx,y+dy);
+
+      if(!neighbors.has(nk))neighbors.set(nk,[]);
+      neighbors.get(nk).push(color);
+    }
+  }
+
+  const next=new Map();
+
+  for(const [k,parents] of neighbors) {
+    const n=parents.length;
+
+    if(cells.has(k)) {
+      if(n===2||n===3)next.set(k,cells.get(k));
+    } else if(n===3) {
+      // Regla genética: el color de una célula nueva se elige de un padre al azar.
+      next.set(k,parents[Math.floor(Math.random()*parents.length)]);
+    }
+  }
+
+  cells=next;
+  render();
+}
+
+function togglePlay() {
+  running=!running;
+  $("play").textContent=running?"⏸ Pausar":"▶ Jugar";
+
+  if(running)timer=setInterval(nextGeneration,120);
+  else {
+    clearInterval(timer);
+    timer=null;
+  }
+}
+
+$("play").addEventListener("click",togglePlay);
+$("step").addEventListener("click",nextGeneration);
+
+$("random").addEventListener("click",()=>{
+  beginGesture();
+
+  const center=worldAt(innerWidth/2,innerHeight/2);
+
+  for(let i=0;i<500;i++)if(Math.random()<.48) {
+    setCell(
+      center.x+Math.floor(Math.random()*41)-20,
+      center.y+Math.floor(Math.random()*31)-15,
+      palette[Math.floor(Math.random()*palette.length)]
+    );
+  }
+
+  finishGesture();
+  render();
+});
+
+$("clear").addEventListener("click",()=>{
+  beginGesture();
+  cells.clear();
+  finishGesture();
+  render();
+});
+
+$("home").addEventListener("click",()=>{
+  cameraX=innerWidth/2;
+  cameraY=innerHeight/2;
+  render();
+});
+
+$("placePattern").addEventListener("click",()=>{
+  const data=patternData($("pattern").value);
+
+  pendingPattern={x:0,y:0,...data};
+  pastePreview=null;
+  tool="pattern";
+
+  document.querySelectorAll("[data-tool]").forEach(b=>b.classList.remove("active"));
+
+  render();
+  toast("Mueve el ratón y haz clic para colocar el patrón. Esc cancela.");
+});
+
+$("undo").addEventListener("click",undo);
+$("redo").addEventListener("click",redo);
+$("copy").addEventListener("click",copySelection);
+$("paste").addEventListener("click",pasteFromClipboard);
+
+$("openCode").addEventListener("click",()=>{
+  $("codePanel").classList.toggle("open");
+
+  const data=getSelectedCells();
+  if(data)$("code").value=encodePattern(data,"Selection");
+});
+
+$("closeCode").addEventListener("click",()=>$("codePanel").classList.remove("open"));
+
+$("generate").addEventListener("click",()=>{
+  const data=getSelectedCells();
+
+  if(!data) {
+    toast("Selecciona un patrón primero.");
+    return;
+  }
+
+  $("code").value=encodePattern(data,"Selection");
+  toast("Código generado.");
+});
+
+$("copyCode").addEventListener("click",()=>copyText($("code").value));
+
+$("importCode").addEventListener("click",()=>{
+  try {
+    const data=parsePattern($("code").value);
+    startPaste(data);
+    $("codePanel").classList.remove("open");
+  } catch(e) {
+    toast("Error: "+e.message);
+  }
+});
+
+window.addEventListener("keydown",async e=>{
+  const tag=document.activeElement.tagName;
+  const editing=["INPUT","SELECT","TEXTAREA"].includes(tag);
+
+  if(editing)return;
+
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z") {
+    e.preventDefault();
+    if(e.shiftKey)redo();
+    else undo();
+    return;
+  }
+
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y") {
+    e.preventDefault();
+    redo();
+    return;
+  }
+
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="c") {
+    e.preventDefault();
+    await copySelection();
+    return;
+  }
+
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="v") {
+    e.preventDefault();
+    await pasteFromClipboard();
+    return;
+  }
+
+  if(e.code==="Space") {
+    e.preventDefault();
+    togglePlay();
+    return;
+  }
+
+  if(e.key.toLowerCase()==="q")zoom(1/1.15);
+  if(e.key.toLowerCase()==="e")zoom(1.15);
+
+  if(e.key==="Escape") {
+    pastePreview=null;
+    pendingPattern=null;
+    shapeStart=null;
+    shapeEnd=null;
+    selectionStart=null;
+    selectionEnd=null;
+
+    if(tool==="paste"||tool==="pattern")selectTool("brush");
+    else render();
+  }
+});
+
+window.addEventListener("resize",resize);
+
+cameraX=innerWidth/2;
+cameraY=innerHeight/2;
+
+[
+  [0,0],[1,0],[2,0],[0,1],[1,2]
+].forEach(([x,y],i)=>setCell(x,y,palette[i%palette.length]));
+
+resize();
+updateHistoryButtons();
+})();
+</script>
+</body>
+</html>
