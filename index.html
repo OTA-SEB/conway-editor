@@ -149,6 +149,7 @@ label{display:flex;align-items:center;gap:5px}
   <button id="redo" title="Rehacer (Ctrl+Shift+Z)">↷</button>
   <button id="copy" title="Copiar selección (Ctrl+C)">Copiar</button>
   <button id="paste" title="Pegar (Ctrl+V)">Pegar</button>
+  <button id="downloadImage" title="Descargar selección como PNG">📷 PNG</button>
 </div>
 
 <div id="bottomRight">
@@ -541,6 +542,50 @@ function getSelectedCells() {
     }
   }
   return {w:selection.w,h:selection.h,cells:out};
+}
+
+function downloadSelectionImage() {
+  const data = getSelectedCells();
+
+  if (!data) {
+    toast("Primero selecciona un rectángulo.");
+    return;
+  }
+
+  const pixelSize = 16;
+  const image = document.createElement("canvas");
+
+  image.width = data.w * pixelSize;
+  image.height = data.h * pixelSize;
+
+  const ctxImage = image.getContext("2d");
+
+  for (const cell of data.cells) {
+    ctxImage.fillStyle = cell.color;
+    ctxImage.fillRect(
+      cell.x * pixelSize,
+      cell.y * pixelSize,
+      pixelSize,
+      pixelSize
+    );
+  }
+
+  image.toBlob(blob => {
+    if (!blob) {
+      toast("No se pudo generar la imagen.");
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "conway-selection.png";
+    link.click();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("¡Imagen descargada!");
+  }, "image/png");
 }
 
 function patternData(name) {
@@ -1116,6 +1161,7 @@ $("undo").addEventListener("click",undo);
 $("redo").addEventListener("click",redo);
 $("copy").addEventListener("click",copySelection);
 $("paste").addEventListener("click",pasteFromClipboard);
+$("downloadImage").addEventListener("click", downloadSelectionImage);
 
 $("openCode").addEventListener("click",()=>{
   $("codePanel").classList.toggle("open");
