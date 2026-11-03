@@ -49,7 +49,7 @@ Explore the **Pattern Atlas** to watch classic Life patterns evolve, learn what 
 - Three bite-sized challenges based on Conway's rules.
 - Edit a pattern, advance generations, and reach an exact population target.
 - Progress is tracked for the current session; no account or backend required.
-- Touch-friendly board and controls for mobile.
+- Touch-friendly board and controls for mobile, including drag-to-paint editing.
 
 ### Image converter
 - Open **Image → Conway** from the main menu.
