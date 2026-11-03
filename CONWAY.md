@@ -115,9 +115,9 @@ No necesitas reescribir manualmente las filas para crear variantes simétricas o
 
 ## Reglas del archivo
 
-1. Un archivo contiene una sola declaración `pattern`.
-2. Todas las filas van dentro de sus llaves.
-3. La llave de cierre es obligatoria.
+1. Un archivo contiene una sola declaración `pattern` y puede incluir varios `shape` antes de ella.
+2. Las figuras reutilizables y la paleta global se declaran antes del patrón principal.
+3. La llave de cierre es obligatoria para cada bloque.
 4. Las filas pueden tener longitudes distintas; las más cortas se completan visualmente con células vacías.
 5. Los símbolos no declarados producen un error en lugar de asignarles un color arbitrario.
 
