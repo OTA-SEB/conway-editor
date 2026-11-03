@@ -28,7 +28,7 @@ p{color:var(--muted);line-height:1.5;margin:8px 0}
 .pill{border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-size:13px}
 .pill b{color:var(--text)}
 .boardWrap{position:relative;overflow:hidden;border-radius:14px;background:#0c1119;border:1px solid #3b4c61;touch-action:manipulation}
-canvas{display:block;width:100%;height:auto;aspect-ratio:1;touch-action:manipulation;cursor:crosshair}
+canvas{display:block;width:100%;height:auto;aspect-ratio:1;touch-action:none;cursor:crosshair}
 .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 button{border:1px solid var(--line);background:#293445;color:var(--text);border-radius:11px;padding:10px 14px;min-height:44px;cursor:pointer;font-weight:650}
 button:hover{background:#39485d}
@@ -137,12 +137,38 @@ function step(){
  cells=next;generation++;render();
 }
 function stop(){if(timer){clearInterval(timer);timer=null;}}
+let paintingPointer=null,lastPaintedCell=null;
+function paintAt(e){
+ const r=canvas.getBoundingClientRect();
+ const x=Math.floor((e.clientX-r.left)/r.width*SIZE),y=Math.floor((e.clientY-r.top)/r.height*SIZE);
+ if(x<0||y<0||x>=SIZE||y>=SIZE)return;
+ const cellKey=key(x,y);
+ if(cellKey===lastPaintedCell)return;
+ lastPaintedCell=cellKey;
+ setCell(x,y,!alive(x,y));
+ const msg=document.getElementById("message");
+ msg.className="message";
+ msg.textContent="Patrón editado. ¡Prueba una generación!";
+ render();
+}
 canvas.addEventListener("pointerdown",e=>{
- if(e.pointerType==="mouse"&&e.button!==0)return;
- const r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*SIZE),y=Math.floor((e.clientY-r.top)/r.height*SIZE);
- if(x<0||y<0||x>=SIZE||y>=SIZE||generation>0)return;
- setCell(x,y,!alive(x,y));document.getElementById("message").className="message";document.getElementById("message").textContent="Patrón editado. ¡Prueba una generación!";render();
+ if((e.pointerType==="mouse"&&e.button!==0)||generation>0)return;
+ paintingPointer=e.pointerId;
+ lastPaintedCell=null;
+ canvas.setPointerCapture(e.pointerId);
+ paintAt(e);
 });
+canvas.addEventListener("pointermove",e=>{
+ if(e.pointerId===paintingPointer&&generation===0)paintAt(e);
+});
+function finishPainting(e){
+ if(e.pointerId!==paintingPointer)return;
+ paintingPointer=null;
+ lastPaintedCell=null;
+}
+canvas.addEventListener("pointerup",finishPainting);
+canvas.addEventListener("pointercancel",finishPainting);
+canvas.addEventListener("lostpointercapture",finishPainting);
 document.getElementById("step").addEventListener("click",step);
 document.getElementById("reset").addEventListener("click",()=>loadLevel(levelIndex));
 document.getElementById("clear").addEventListener("click",()=>{if(generation!==0)return;cells.clear();render();});
