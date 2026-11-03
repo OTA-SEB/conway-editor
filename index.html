@@ -134,6 +134,7 @@ label{display:flex;align-items:center;gap:5px}
   </label>
   <button id="placePattern">＋ Colocar patrón</button>
   <button id="openCode">Código .conway</button>
+  <button id="openPixelizer">🖼️ Imagen → Conway</button>
   <span id="status">Preparado</span>
 </header>
 
@@ -1169,6 +1170,8 @@ $("copy").addEventListener("click",copySelection);
 $("paste").addEventListener("click",pasteFromClipboard);
 $("downloadImage").addEventListener("click", downloadSelectionImage);
 
+$("openPixelizer").addEventListener("click",()=>{location.href="./pixelizer.html";});
+
 $("openCode").addEventListener("click",()=>{
   $("codePanel").classList.toggle("open");
 
@@ -1266,6 +1269,18 @@ cameraY=innerHeight/2;
 
 resize();
 updateHistoryButtons();
+
+// Recibir una imagen convertida desde pixelizer.html.
+const pendingImagePattern=localStorage.getItem("conway:pending-image-pattern");
+if(pendingImagePattern){
+  localStorage.removeItem("conway:pending-image-pattern");
+  try{
+    startPaste(parsePattern(pendingImagePattern));
+    toast("Imagen lista. Colócala en el lienzo con un clic.");
+  }catch(e){
+    toast("No se pudo importar la imagen: "+e.message);
+  }
+}
 })();
 </script>
 </body>
