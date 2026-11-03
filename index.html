@@ -1026,6 +1026,9 @@ function floodFill(start) {
   const replacement=$("color").value;
   if(mode==="color"&&targetColor===replacement)return;
 
+  // Primero recopilar toda la región sin modificar cells.
+  // Si se pinta mientras se busca, las celdas recién pintadas dejan
+  // de coincidir con el estado original y la búsqueda se corta.
   const matches=(x,y)=>{
     const k=key(x,y);
     return mode==="color"
@@ -1035,35 +1038,38 @@ function floodFill(start) {
 
   const queue=[[start.x,start.y]];
   const visited=new Set([startKey]);
-  let head=0,count=0;
+  const region=[];
+  let head=0;
 
-  while(head<queue.length&&count<MAX_BUCKET_VISITS) {
+  while(head<queue.length&&region.length<MAX_BUCKET_VISITS) {
     const [x,y]=queue[head++];
     if(!matches(x,y))continue;
 
-    const k=key(x,y);
-
-    if(mode==="color")cells.set(k,replacement);
-    else if(startAlive)cells.delete(k);
-    else cells.set(k,replacement);
-
-    count++;
+    region.push([x,y]);
 
     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
       const nx=x+dx,ny=y+dy,nk=key(nx,ny);
       if(visited.has(nk))continue;
 
-      visited.add(nk);
-
       // Una región vacía infinita necesita límites para poder recorrerse.
       if(!startAlive&&mode==="state"&&
         (Math.abs(nx-start.x)>200||Math.abs(ny-start.y)>200))continue;
 
+      visited.add(nk);
       queue.push([nx,ny]);
     }
   }
 
-  if(count>=MAX_BUCKET_VISITS)
+  // Aplicar el cambio después de terminar la búsqueda.
+  for(const [x,y] of region) {
+    const k=key(x,y);
+
+    if(mode==="color")cells.set(k,replacement);
+    else if(startAlive)cells.delete(k);
+    else setCell(x,y,replacement);
+  }
+
+  if(region.length>=MAX_BUCKET_VISITS)
     toast("Límite de seguridad de la cubeta alcanzado.");
 }
 
