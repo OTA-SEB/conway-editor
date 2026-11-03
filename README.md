@@ -92,6 +92,15 @@ Conway's Game of Life is a cellular automaton. Each cell has eight neighboring p
 
 Repeating these rules creates stable structures, oscillators, moving patterns, and many other behaviors.
 
+## Code responsibilities
+
+The editor and the Conway language are kept separate:
+
+- `editor.html` owns the canvas, tools, camera, simulation, selection, and user interaction.
+- `conway-language.js` owns Conway text serialization and parsing. It receives plain data and options; it does not read the DOM or manipulate the canvas.
+
+This keeps language rules independent from the editor interface and makes the parser reusable by other parts of the project.
+
 ## Technology
 
 Conway Studio is built with standard **HTML, CSS, and JavaScript**. It runs in a modern browser and does not require a custom backend or installation.
