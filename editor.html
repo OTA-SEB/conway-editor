@@ -209,7 +209,9 @@ function playSound(kind){
       fill:{frequency:280,end:460,duration:.13,wave:"sine"},
       pattern:{frequency:520,end:820,duration:.16,wave:"triangle"},
       zoom:{frequency:390,end:560,duration:.055,wave:"sine"},
-      center:{frequency:480,end:360,duration:.09,wave:"sine"}
+      center:{frequency:480,end:360,duration:.09,wave:"sine"},
+      random:{frequency:540,end:880,duration:.14,wave:"triangle"},
+      clear:{frequency:300,end:110,duration:.18,wave:"sine"}
     };
     const sound=presets[kind]||presets.paint;
     const now=audioContext.currentTime;
@@ -999,14 +1001,14 @@ $("random").addEventListener("click",()=>{
     );
   }
 
-  finishGesture();
+  finishGesture("random");
   render();
 });
 
 $("clear").addEventListener("click",()=>{
   beginGesture();
   cells.clear();
-  finishGesture();
+  finishGesture("clear");
   render();
 });
 
