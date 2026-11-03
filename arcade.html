@@ -53,7 +53,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <aside class="panel">
 <h2>Retos</h2>
 <p>Completa los tres para terminar el laboratorio.</p>
+<div class="pill" style="display:inline-block;margin:4px 0 12px">Progreso <b id="progress">0 / 3</b></div>
 <div class="levels" id="levels"></div>
+<button id="resetProgress" style="width:100%;margin-top:10px">Reiniciar progreso</button>
 <div class="hint"><b>Consejo:</b> las células no se mueven por sí solas. ¡El patrón completo es quien evoluciona!</div>
 </aside>
 <section class="panel">
@@ -86,6 +88,19 @@ const levels=[
  {name:"Despegue",short:"Prepara una nave",desc:"Completa el patrón de 5 células. Después de 4 generaciones, la población debe seguir siendo de 5.",goal:5,gens:4,seed:[[8,7],[9,8],[7,9],[8,9]]}
 ];
 let levelIndex=0,cells=new Set(),generation=0,won=new Set(),timer=null;
+const PROGRESS_KEY="conway:arcade-progress";
+function loadProgress(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||"[]");
+  if(Array.isArray(saved))saved.forEach(i=>{if(Number.isInteger(i)&&i>=0&&i<levels.length)won.add(i);});
+ }catch{}
+}
+function saveProgress(){
+ try{localStorage.setItem(PROGRESS_KEY,JSON.stringify([...won]));}catch{}
+}
+function updateProgress(){
+ document.getElementById("progress").textContent=won.size+" / "+levels.length;
+}
 const key=(x,y)=>x+","+y;
 function setCell(x,y,alive){const k=key(x,y);alive?cells.add(k):cells.delete(k);}
 function alive(x,y){return cells.has(key(x,y));}
@@ -175,11 +190,20 @@ document.getElementById("clear").addEventListener("click",()=>{if(generation!==0
 document.getElementById("check").addEventListener("click",()=>{
  const l=levels[levelIndex],msg=document.getElementById("message");
  if(generation!==l.gens){msg.textContent="Primero llega a la generación "+l.gens+".";return;}
- if(count()===l.goal){won.add(levelIndex);msg.className="message win";msg.textContent="¡Reto superado! Lograste "+count()+" células en "+generation+" generaciones.";renderLevels();render();}
+ if(count()===l.goal){won.add(levelIndex);saveProgress();msg.className="message win";msg.textContent="¡Reto superado! Lograste "+count()+" células en "+generation+" generaciones.";renderLevels();render();}
  else{msg.textContent="Aún no. Hay "+count()+" células; el objetivo es "+l.goal+". Reinicia e intenta otro patrón.";}
 });
 document.getElementById("next").addEventListener("click",()=>{if(won.has(levelIndex)&&levelIndex<levels.length-1)loadLevel(levelIndex+1);});
+document.getElementById("resetProgress").addEventListener("click",()=>{
+ if(!confirm("¿Borrar todos los retos completados en este dispositivo?"))return;
+ won.clear();
+ try{localStorage.removeItem(PROGRESS_KEY);}catch{}
+ renderLevels();
+ document.getElementById("message").className="message";
+ document.getElementById("message").textContent="Progreso reiniciado.";
+});
 window.addEventListener("resize",draw);
+loadProgress();
 loadLevel(0);
 })();
 </script>
