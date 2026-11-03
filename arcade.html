@@ -74,7 +74,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </div>
 <div class="controls"><button id="check">✓ Comprobar objetivo</button><button id="next" disabled>Siguiente reto →</button></div>
 <div id="message" class="message" role="status">Toca el tablero para cambiar células.</div>
-<p class="help">En móvil: toca las casillas. En PC: clic. No hay límite de tiempo.</p>
+<p class="help">En móvil: toca o arrastra el dedo. En PC: clic o arrastra. Cada casilla cambia una sola vez por gesto. No hay límite de tiempo.</p>
 </section>
 </div>
 </main>
@@ -152,14 +152,14 @@ function step(){
  cells=next;generation++;render();
 }
 function stop(){if(timer){clearInterval(timer);timer=null;}}
-let paintingPointer=null,lastPaintedCell=null;
+let paintingPointer=null,paintedCellsThisGesture=null;
 function paintAt(e){
  const r=canvas.getBoundingClientRect();
  const x=Math.floor((e.clientX-r.left)/r.width*SIZE),y=Math.floor((e.clientY-r.top)/r.height*SIZE);
  if(x<0||y<0||x>=SIZE||y>=SIZE)return;
  const cellKey=key(x,y);
- if(cellKey===lastPaintedCell)return;
- lastPaintedCell=cellKey;
+ if(paintedCellsThisGesture?.has(cellKey))return;
+ paintedCellsThisGesture?.add(cellKey);
  setCell(x,y,!alive(x,y));
  const msg=document.getElementById("message");
  msg.className="message";
@@ -169,7 +169,7 @@ function paintAt(e){
 canvas.addEventListener("pointerdown",e=>{
  if((e.pointerType==="mouse"&&e.button!==0)||generation>0)return;
  paintingPointer=e.pointerId;
- lastPaintedCell=null;
+ paintedCellsThisGesture=new Set();
  canvas.setPointerCapture(e.pointerId);
  paintAt(e);
 });
@@ -179,7 +179,7 @@ canvas.addEventListener("pointermove",e=>{
 function finishPainting(e){
  if(e.pointerId!==paintingPointer)return;
  paintingPointer=null;
- lastPaintedCell=null;
+ paintedCellsThisGesture=null;
 }
 canvas.addEventListener("pointerup",finishPainting);
 canvas.addEventListener("pointercancel",finishPainting);
