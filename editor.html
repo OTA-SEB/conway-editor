@@ -174,6 +174,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 
 <script src="conway-language.js"></script>
 <script src="conway-geometry.js"></script>
+<script src="conway-history.js"></script>
 <script src="conway-engine.js"></script>
 <script>
 (() => {
@@ -185,6 +186,7 @@ const ctx = canvas.getContext("2d");
 const {encodePattern,parsePattern} = window.ConwayLanguage;
 const {nextGeneration:simulateGeneration} = window.ConwayEngine;
 const {linePoints,makeShape} = window.ConwayGeometry;
+const ConwayHistory = window.ConwayHistory;
 
 const palette = [
   "#ff595e","#ff924c","#ffca3a","#c5f550",
@@ -311,9 +313,7 @@ let shapeEnd = null;
 let pastePreview = null;
 let pendingPattern = null;
 
-let undoStack = [];
-let redoStack = [];
-const HISTORY_LIMIT = 80;
+const history = new ConwayHistory(80);
 const MAX_CELLS = 500000;
 const MAX_PATTERN_DIMENSION = 2000;
 const MAX_BUCKET_VISITS = 100000;
@@ -342,29 +342,27 @@ function snapshot() {
 }
 
 function saveUndo(before=snapshot()) {
-  undoStack.push(before);
-  if(undoStack.length>HISTORY_LIMIT)undoStack.shift();
-  redoStack.length=0;
+  history.record(before);
   updateHistoryButtons();
 }
 
 function updateHistoryButtons() {
-  $("undo").disabled=!undoStack.length;
-  $("redo").disabled=!redoStack.length;
+  $("undo").disabled=!history.canUndo;
+  $("redo").disabled=!history.canRedo;
 }
 
 function undo() {
-  if(!undoStack.length)return;
-  redoStack.push(snapshot());
-  cells=undoStack.pop();
+  const previous=history.undo(cells);
+  if(!previous)return;
+  cells=previous;
   render();
   updateHistoryButtons();
 }
 
 function redo() {
-  if(!redoStack.length)return;
-  undoStack.push(snapshot());
-  cells=redoStack.pop();
+  const next=history.redo(cells);
+  if(!next)return;
+  cells=next;
   render();
   updateHistoryButtons();
 }
@@ -1108,7 +1106,7 @@ if(pendingSavedMap){
     const saved=JSON.parse(pendingSavedMap);
     if(!Array.isArray(saved.cells))throw new Error("Formato inválido");
     cells=new Map(saved.cells.filter(c=>c&&typeof c.key==="string"&&validColor(c.color)).map(c=>[c.key,c.color]));
-    undoStack.length=0;redoStack.length=0;updateHistoryButtons();
+    history.clear();updateHistoryButtons();
     toast("Mapa cargado: "+saved.name);
   }catch(e){toast("No se pudo cargar el mapa guardado.");}
 }
