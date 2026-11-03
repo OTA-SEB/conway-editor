@@ -82,11 +82,19 @@ document.getElementById("play").addEventListener("click",()=>{if(timer){stop();r
 document.getElementById("step").addEventListener("click",step);
 document.getElementById("reset").addEventListener("click",()=>load(selected));
 document.getElementById("openEditor").addEventListener("click",()=>{
-  const pattern=patterns[selected];
-  const xs=pattern.cells.map(([x])=>x),ys=pattern.cells.map(([,y])=>y);
+  if(!cells.size){
+    alert("Este patrón ya no tiene células vivas.");
+    return;
+  }
+  stop();
+  const coordinates=[...cells].map(k=>k.split(",").map(Number));
+  const xs=coordinates.map(([x])=>x),ys=coordinates.map(([,y])=>y);
   const minX=Math.min(...xs),minY=Math.min(...ys);
   const w=Math.max(...xs)-minX+1,h=Math.max(...ys)-minY+1;
-  const payload={v:1,w,h,cells:pattern.cells.map(([x,y])=>({x:x-minX,y:y-minY,color:"#65d9b9"}))};
+  const payload={
+    v:1,w,h,
+    cells:coordinates.map(([x,y])=>({x:x-minX,y:y-minY,color:"#65d9b9"}))
+  };
   try{
     localStorage.setItem("conway:pending-atlas-pattern","# COMPACT: "+JSON.stringify(payload));
     location.href="./editor.html";
