@@ -48,7 +48,7 @@ Explore the **Pattern Atlas** to watch classic Life patterns evolve, learn what 
 ### Conway Arcade
 - Three bite-sized challenges based on Conway's rules.
 - Edit a pattern, advance generations, and reach an exact population target.
-- Progress is tracked for the current session; no account or backend required.
+- Completed challenges are saved in the browser's `localStorage` on the current device; no account or backend required.
 - Touch-friendly board and controls for mobile, including drag-to-paint editing.
 
 ### Image converter
