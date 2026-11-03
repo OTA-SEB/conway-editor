@@ -75,115 +75,67 @@ label{display:flex;align-items:center;gap:5px}
   #status{width:100%}
 }
 
-/* Interfaz renovada */
-button,select{
-  border:1px solid #414a5e;border-radius:10px;padding:9px 12px;
-  background:linear-gradient(180deg,#303849,#252b38);
-  box-shadow:0 2px 5px #0003;transition:background .15s,border-color .15s,transform .12s;
-}
-button:hover,select:hover{background:#3a465b;border-color:#64738b}
-button:active{transform:translateY(1px)}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #65d9b9;outline-offset:2px}
-button.active{background:linear-gradient(180deg,#287c6c,#205b52);border-color:#65d9b9}
-input[type=color]{width:42px;height:38px;border-radius:10px;cursor:pointer}
-input[type=range]{accent-color:#65d9b9;cursor:pointer}
-label{gap:8px;color:#d5dbea}
-header strong{font-size:16px;letter-spacing:.2px;margin-right:8px}
-#status{padding:5px 8px;border-radius:7px;background:#11151d99}
-#bottomLeft,#bottomRight{box-shadow:0 8px 28px #0006;backdrop-filter:blur(12px)}
-#codePanel{backdrop-filter:blur(16px)}
-#toast{z-index:20;box-shadow:0 8px 30px #0008}
+/* Interfaz compacta y adaptable */
+#appHeader{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px 16px;background:#171d29f5;border-bottom:1px solid #3a4659;box-shadow:0 8px 30px #0004;backdrop-filter:blur(14px)}
+.topbar,.topActions,.toolRow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.topbar{justify-content:space-between}.topActions{justify-content:flex-end}
+.topActions button,.controlGrid button{min-height:40px}.toolRow{gap:12px}.toolRow label,.controlGrid label{display:flex;align-items:center;gap:8px}
+.toolPickerLabel select{min-width:180px}.colorControl input{width:42px;height:38px}.sizeControl input{width:120px}
+#status{margin-left:auto;font-size:12px;color:var(--muted)}.moreControls{border-top:1px solid #344054;padding-top:8px}
+.moreControls summary{cursor:pointer;color:#b9c8d9;font-weight:650;padding:4px 0}.controlGrid{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:10px 0 2px}
+.controlGrid select{max-width:240px;min-height:40px}
+button,select{border:1px solid #414a5e;border-radius:10px;padding:9px 12px;background:linear-gradient(180deg,#303849,#252b38);color:var(--text);box-shadow:0 2px 5px #0003;transition:background .15s,border-color .15s,transform .12s}
+button:hover,select:hover{background:#3a465b;border-color:#64738b}button:active{transform:translateY(1px)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #65d9b9;outline-offset:2px}input[type=range]{accent-color:#65d9b9;cursor:pointer}
+#bottomLeft,#bottomRight{box-shadow:0 8px 28px #0006;backdrop-filter:blur(12px)}#codePanel{backdrop-filter:blur(16px)}#toast{z-index:20;box-shadow:0 8px 30px #0008}
 @media(max-width:700px){
-  body{overflow:hidden}
-  header{
-    max-height:40vh;overflow-y:auto;overflow-x:hidden;align-content:flex-start;
-    padding:9px;gap:7px;border-radius:0 0 14px 14px;
-  }
-  header strong{width:100%;margin:0 0 2px}
-  header>button{min-height:42px;flex:1 1 auto}
-  .group{flex-wrap:wrap}
-  .group button{min-height:42px}
-  header label{min-height:38px;flex:1 1 auto}
-  header select{max-width:48vw;min-height:40px}
-  input[type=range]{width:min(27vw,120px);height:30px}
-  #status{width:100%;font-size:11px}
-  #bottomLeft{
-    left:8px;right:8px;bottom:8px;max-width:calc(100vw - 16px);
-    overflow-x:auto;gap:6px;padding:7px;border-radius:13px;
-  }
-  #bottomLeft button{min-width:44px;min-height:44px;white-space:nowrap}
-  #bottomRight{right:8px;bottom:68px;padding:6px 9px;border-radius:12px}
-  #noPaint{width:44px;height:44px}
-  #codePanel{top:8px;left:8px;right:8px;bottom:66px;width:auto;max-height:none}
-  #panelButtons button{min-height:42px;flex:1 1 44%}
-  #toast{top:42vh;max-width:calc(100vw - 24px);text-align:center}
+ body{overflow:hidden}#appHeader{max-height:46vh;overflow-y:auto;overflow-x:hidden;padding:9px 10px;gap:9px;border-radius:0 0 14px 14px}
+ .topbar{align-items:flex-start}.topbar strong{font-size:15px;padding:8px 0}.topActions{gap:6px}.topActions button{min-height:42px;padding:8px 10px}
+ .toolRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.toolPickerLabel{grid-column:1/-1;display:grid!important;grid-template-columns:auto minmax(0,1fr)}
+ .toolPickerLabel select{width:100%;min-width:0;min-height:44px}.colorControl{grid-column:1}.sizeControl{grid-column:2;justify-content:flex-end}
+ .sizeControl input{width:min(26vw,112px);height:30px}#status{grid-column:1/-1;margin:0;font-size:11px}
+ .moreControls summary{min-height:34px}.controlGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .controlGrid button,.controlGrid label{min-width:0;min-height:42px}.controlGrid label{display:grid;gap:4px}.controlGrid select{width:100%;max-width:none}
+ #bottomLeft{left:8px;right:8px;bottom:8px;max-width:calc(100vw - 16px);overflow-x:auto;gap:6px;padding:7px;border-radius:13px}
+ #bottomLeft button{min-width:44px;min-height:44px;white-space:nowrap}#bottomRight{right:8px;bottom:68px;padding:6px 9px;border-radius:12px}
+ #bottomRight button{width:44px;height:44px}#codePanel{top:8px;left:8px;right:8px;bottom:66px;width:auto;max-height:none}
+ #panelButtons button{min-height:42px;flex:1 1 44%}#toast{top:48vh;max-width:calc(100vw - 24px);text-align:center}
 }
-
+@media(max-width:380px){.topbar{flex-direction:column;gap:4px}.topActions{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .topActions button{padding:8px 5px}.sizeControl{grid-column:1/-1;justify-content:space-between}.sizeControl input{width:55vw}}
 </style>
 </head>
 <body>
 
-<header>
-  <strong>Conway Studio ∞</strong>
-  <button id="play">▶ Jugar</button>
-  <button id="step">Paso</button>
-  <button id="random">Aleatorio</button>
-  <button id="clear">Limpiar</button>
-  <button id="home">Centrar</button>
-  <button id="saveMap">💾 Guardar mapa</button>
-  <button id="mainMenu">⌂ Menú</button>
-
-  <span class="group">
-    <button data-tool="brush" class="active">🖌️ Pincel</button>
-    <button data-tool="eraser">🧽 Borrador</button>
-    <button data-tool="bucket">🪣 Cubeta</button>
-    <button data-tool="select">▧ Selección</button>
-  </span>
-
-  <span class="group">
-    <button data-tool="line">╱ Línea</button>
-    <button data-tool="rect">▱ Rectángulo</button>
-    <button data-tool="ellipse">◯ Elipse</button>
-  </span>
-
-  <label>Color <input id="color" type="color" value="#54e6a5"></label>
-  <label>Tamaño <input id="brushSize" type="range" min="1" max="20" value="1"><span id="sizeValue">1</span></label>
-
-  <label>Forma
-    <select id="shapeMode">
-      <option value="outline">Contorno</option>
-      <option value="filled">Rellena</option>
-    </select>
-  </label>
-
-  <label>Cubeta
-    <select id="bucketMode">
-      <option value="state">Rellenar región</option>
-      <option value="color">Recolorear región</option>
-      <option value="water">Agua (borrador de cubeta)</option>
-    </select>
-  </label>
-
-  <label>Patrón
-    <select id="pattern">
-      <option value="glider">Planeador (Glider)</option>
-      <option value="lwss">Nave ligera (LWSS)</option>
-      <option value="block">Bloque estable</option>
-      <option value="beehive">Colmena estable</option>
-      <option value="blinker">Parpadeador</option>
-      <option value="toad">Sapo</option>
-      <option value="beacon">Baliza</option>
-      <option value="pulsar">Pulsar</option>
-      <option value="gosper">Gosper Glider Gun</option>
-      <option value="rPentomino">R-pentominó</option>
-      <option value="diehard">Diehard</option>
-      <option value="acorn">Acorn</option>
-    </select>
-  </label>
-  <button id="placePattern">＋ Colocar patrón</button>
-  <button id="openCode">Código .conway</button>
-  <button id="openPixelizer">🖼️ Imagen → Conway</button>
-  <span id="status">Preparado</span>
+<header id="appHeader">
+  <div class="topbar"><strong>Conway Studio ∞</strong><div class="topActions">
+    <button id="mainMenu">⌂ Menú</button><button id="saveMap">💾 Guardar</button><button id="play">▶ Jugar</button>
+  </div></div>
+  <div class="toolRow">
+    <label class="toolPickerLabel">Herramienta<select id="toolPicker">
+      <option value="brush">🖌️ Pincel</option><option value="eraser">🧽 Borrador</option>
+      <option value="bucket">🪣 Cubeta</option><option value="select">▧ Selección</option>
+      <option value="line">╱ Línea</option><option value="rect">▱ Rectángulo</option>
+      <option value="ellipse">◯ Elipse</option><option value="none">✋ Mover lienzo</option>
+    </select></label>
+    <label class="colorControl">Color <input id="color" type="color" value="#54e6a5"></label>
+    <label class="sizeControl">Tamaño<input id="brushSize" type="range" min="1" max="20" value="1"><span id="sizeValue">1</span></label>
+    <span id="status">Preparado</span>
+  </div>
+  <details class="moreControls"><summary>Más controles</summary><div class="controlGrid">
+    <button id="step">Paso</button><button id="random">Aleatorio</button><button id="clear">Limpiar</button><button id="home">Centrar</button>
+    <label>Forma<select id="shapeMode"><option value="outline">Contorno</option><option value="filled">Rellena</option></select></label>
+    <label>Cubeta<select id="bucketMode"><option value="state">Rellenar región</option><option value="color">Recolorear región</option><option value="water">Agua (borrador de cubeta)</option></select></label>
+    <label>Patrón<select id="pattern">
+      <option value="glider">Planeador (Glider)</option><option value="lwss">Nave ligera (LWSS)</option>
+      <option value="block">Bloque estable</option><option value="beehive">Colmena estable</option>
+      <option value="blinker">Parpadeador</option><option value="toad">Sapo</option>
+      <option value="beacon">Baliza</option><option value="pulsar">Pulsar</option>
+      <option value="gosper">Gosper Glider Gun</option><option value="rPentomino">R-pentominó</option>
+      <option value="diehard">Diehard</option><option value="acorn">Acorn</option>
+    </select></label>
+    <button id="placePattern">＋ Colocar patrón</button><button id="openCode">Código .conway</button>
+    <button id="openPixelizer">🖼️ Imagen → Conway</button>
+  </div></details>
 </header>
 
 <canvas id="world"></canvas>
@@ -201,12 +153,7 @@ header strong{font-size:16px;letter-spacing:.2px;margin-right:8px}
   <button id="downloadImage" title="Descargar selección como PNG">📷 PNG</button>
 </div>
 
-<div id="bottomRight">
-  <span style="color:var(--muted);font-size:12px">No pintar</span>
-  <button id="noPaint" title="Herramienta de no pintar" aria-label="No pintar">◻</button>
-  <button id="zoomOut" title="Alejar" aria-label="Alejar">−</button>
-  <button id="zoomIn" title="Acercar" aria-label="Acercar">＋</button>
-</div>
+<div id="bottomRight" aria-label="Zoom del lienzo"><button id="zoomOut" title="Alejar" aria-label="Alejar">−</button><button id="zoomIn" title="Acercar" aria-label="Acercar">＋</button></div>
 
 <div id="codePanel">
   <strong>Lenguaje Conway</strong>
@@ -802,7 +749,7 @@ function startPaste(data) {
   pastePreview={x:0,y:0,cells:data.cells,w:data.w,h:data.h};
   pendingPattern=null;
   tool="paste";
-  document.querySelectorAll("[data-tool]").forEach(b=>b.classList.remove("active"));
+  $("toolPicker").value="brush";
   render();
   toast("Mueve el ratón y haz clic para colocar. Esc cancela.");
 }
@@ -868,17 +815,10 @@ function selectTool(next) {
   selectionStart=null;
   selectionEnd=null;
 
-  document.querySelectorAll("[data-tool]").forEach(b=>
-    b.classList.toggle("active",b.dataset.tool===tool));
-
-  $("noPaint").classList.toggle("active",tool==="none");
+  $("toolPicker").value=(tool==="paste"||tool==="pattern")?"brush":tool;
   render();
 }
-
-document.querySelectorAll("[data-tool]").forEach(b=>
-  b.addEventListener("click",()=>selectTool(b.dataset.tool)));
-
-$("noPaint").addEventListener("click",()=>selectTool(tool==="none"?"brush":"none"));
+$("toolPicker").addEventListener("change",e=>selectTool(e.target.value));
 $("zoomOut").addEventListener("click",()=>zoom(1/1.2));
 $("zoomIn").addEventListener("click",()=>zoom(1.2));
 $("brushSize").addEventListener("input",()=>$("sizeValue").textContent=$("brushSize").value);
@@ -1214,8 +1154,7 @@ $("placePattern").addEventListener("click",()=>{
   pastePreview=null;
   tool="pattern";
 
-  document.querySelectorAll("[data-tool]").forEach(b=>b.classList.remove("active"));
-
+  $("toolPicker").value="brush";
   render();
   toast("Mueve el ratón y haz clic para colocar el patrón. Esc cancela.");
 });
