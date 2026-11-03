@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10151e">
+<title>Atlas de patrones · Conway Studio</title>
+<style>
+:root{color-scheme:dark;--bg:#10151e;--panel:#1b2330;--line:#354257;--text:#edf3fb;--muted:#aab8cb;--mint:#65d9b9}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -15%,#28574f 0,transparent 45%),var(--bg);color:var(--text);font:15px system-ui,sans-serif}
+main{width:min(1100px,100%);margin:auto;padding:clamp(14px,4vw,34px)}
+a,button{font:inherit}a{color:var(--mint);text-decoration:none}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.back,button{padding:10px 14px;border:1px solid var(--line);border-radius:11px;background:#293445;color:var(--text);cursor:pointer;min-height:44px}
+button:hover,.back:hover{background:#39485d}
+.primary{background:#24695c;border-color:var(--mint)}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--mint);text-transform:uppercase}
+h1{font-size:clamp(30px,6vw,48px);margin:8px 0}
+p{color:var(--muted);line-height:1.55}
+.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;margin-top:22px}
+.panel{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
+.patterns{display:grid;gap:8px;margin-top:12px}
+.pattern{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:#222d3d}
+.pattern[aria-current=true]{border-color:var(--mint);background:#203b3a}
+.pattern .dot{width:28px;height:28px;border-radius:8px;background:#354257;display:grid;place-items:center}
+.pattern small{display:block;color:var(--muted);font-size:12px}
+canvas{display:block;width:100%;aspect-ratio:1;background:#0c1119;border:1px solid #3b4c61;border-radius:14px;touch-action:manipulation}
+.info{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.pill{border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--muted);font-size:13px}
+.pill b{color:var(--text)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.controls button{flex:1}
+.description{padding:12px;border-radius:12px;background:#172c2b;color:#c4e9df;margin-top:14px}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.patterns{grid-template-columns:repeat(2,minmax(0,1fr))}.pattern{padding:9px;align-items:flex-start}.pattern .dot{flex-shrink:0}}
+@media(max-width:430px){.patterns{grid-template-columns:1fr}.pattern{align-items:center}}
+</style>
+</head>
+<body>
+<main>
+<header><a class="back" href="./index.html">← Conway Studio</a><span class="eyebrow">Biblioteca viva</span></header>
+<div class="eyebrow">Explora · Aprende · Experimenta</div>
+<h1>Atlas de <span style="color:var(--mint)">patrones</span></h1>
+<p>Algunos patrones desaparecen, otros oscilan y otros viajan por el tablero. Selecciona uno y observa su comportamiento.</p>
+<div class="layout">
+<aside class="panel"><h2>Patrones</h2><p>Una pequeña colección clásica del Juego de la Vida.</p><div class="patterns" id="patterns"></div></aside>
+<section class="panel">
+<h2 id="name">Planeador</h2>
+<p id="subtitle"></p>
+<canvas id="board" width="600" height="600" aria-label="Vista animada del patrón seleccionado"></canvas>
+<div class="info"><span class="pill">Generación <b id="generation">0</b></span><span class="pill">Células vivas <b id="population">5</b></span><span class="pill" id="kind"></span></div>
+<div class="controls"><button id="play" class="primary">▶ Animar</button><button id="step">＋ Un paso</button><button id="reset">↺ Reiniciar</button></div>
+<div class="description" id="description"></div>
+<p style="font-size:13px">La simulación usa bordes muertos: las células que salen del tablero desaparecen.</p>
+</section>
+</div>
+</main>
+<script>
+(()=>{
+"use strict";
+const SIZE=30,canvas=document.getElementById("board"),ctx=canvas.getContext("2d");
+const patterns=[
+{id:"glider",name:"Planeador",subtitle:"Un pequeño patrón que se desplaza en diagonal.",kind:"Navegador",desc:"Cada cuatro generaciones, el planeador avanza una casilla en diagonal. Es uno de los patrones móviles más famosos.",cells:[[1,0],[2,1],[0,2],[1,2],[2,2]]},
+{id:"block",name:"Bloque",subtitle:"La simplicidad también puede ser eterna.",kind:"Estable",desc:"Este bloque de cuatro células no cambia. Es un ejemplo de patrón estable, también llamado still life.",cells:[[0,0],[1,0],[0,1],[1,1]]},
+{id:"beehive",name:"Colmena",subtitle:"Seis células que permanecen quietas.",kind:"Estable",desc:"La colmena conserva su forma para siempre, aunque no sea un rectángulo perfecto.",cells:[[1,0],[2,0],[0,1],[3,1],[1,2],[2,2]]},
+{id:"blinker",name:"Parpadeador",subtitle:"El oscilador más sencillo.",kind:"Oscilador · período 2",desc:"Alterna entre una línea horizontal y una vertical. Después de dos generaciones vuelve a su estado inicial.",cells:[[0,1],[1,1],[2,1]]},
+{id:"toad",name:"Sapo",subtitle:"Un oscilador de seis células.",kind:"Oscilador · período 2",desc:"El sapo cambia de forma en cada generación y recupera su estado original cada dos pasos.",cells:[[1,0],[2,0],[3,0],[0,1],[1,1],[2,1]]},
+{id:"beacon",name:"Baliza",subtitle:"Dos bloques que parpadean entre sí.",kind:"Oscilador · período 2",desc:"La baliza alterna entre dos configuraciones muy parecidas. Es un oscilador estable en el tiempo.",cells:[[0,0],[1,0],[0,1],[1,1],[2,2],[3,2],[2,3],[3,3]]},
+{id:"lwss",name:"Nave ligera",subtitle:"Una nave espacial que cruza el universo.",kind:"Navegador",desc:"La LWSS (Lightweight Spaceship) se desplaza horizontalmente. Su silueta cambia mientras avanza.",cells:[[1,0],[4,0],[0,1],[0,2],[4,2],[0,3],[1,3],[2,3],[3,3]]},
+{id:"pulsar",name:"Pulsar",subtitle:"Un gran oscilador de período 3.",kind:"Oscilador · período 3",desc:"El pulsar es un oscilador espectacular de 48 células. Su patrón se repite cada tres generaciones.",cells:(()=>{const a=[];const groups=[[2,3,4],[8,9,10]];for(const [x1,x2,x3] of groups){for(const y of [0,5,7,12]){a.push([x1,y],[x2,y],[x3,y]);}}for(const x of [0,5,7,12])for(const [y1,y2,y3] of [[2,3,4],[8,9,10]])a.push([x,y1],[x,y2],[x,y3]);return a;})()}
+];
+let selected=0,cells=new Set(),generation=0,timer=null;
+const key=(x,y)=>x+","+y;
+function stop(){if(timer){clearInterval(timer);timer=null;}document.getElementById("play").textContent="▶ Animar";}
+function load(i){stop();selected=i;generation=0;cells.clear();const p=patterns[i],xs=p.cells.map(c=>c[0]),ys=p.cells.map(c=>c[1]),ox=Math.floor((SIZE-(Math.max(...xs)+1))/2),oy=Math.floor((SIZE-(Math.max(...ys)+1))/2);p.cells.forEach(([x,y])=>cells.add(key(x+ox,y+oy)));renderList();render();}
+function renderList(){const root=document.getElementById("patterns");root.replaceChildren();patterns.forEach((p,i)=>{const b=document.createElement("button");b.className="pattern";b.setAttribute("aria-current",String(i===selected));const dot=document.createElement("span");dot.className="dot";dot.textContent=i+1;const label=document.createElement("span");label.textContent=p.name;const small=document.createElement("small");small.textContent=p.kind;label.append(small);b.append(dot,label);b.addEventListener("click",()=>load(i));root.append(b);});}
+function render(){const p=patterns[selected];document.getElementById("name").textContent=p.name;document.getElementById("subtitle").textContent=p.subtitle;document.getElementById("description").textContent=p.desc;document.getElementById("kind").textContent=p.kind;document.getElementById("generation").textContent=generation;document.getElementById("population").textContent=cells.size;draw();}
+function draw(){const dpr=Math.max(1,Math.min(2,devicePixelRatio||1)),rect=canvas.getBoundingClientRect(),side=Math.max(300,Math.round(rect.width||600));canvas.width=side*dpr;canvas.height=side*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);const cell=side/SIZE;ctx.fillStyle="#0c1119";ctx.fillRect(0,0,side,side);ctx.strokeStyle="#202b39";ctx.lineWidth=1;for(let i=0;i<=SIZE;i++){const p=Math.round(i*cell)+.5;ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,side);ctx.stroke();ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(side,p);ctx.stroke();}for(const k of cells){const [x,y]=k.split(",").map(Number);ctx.fillStyle="#65d9b9";ctx.fillRect(x*cell+2,y*cell+2,cell-4,cell-4);}}
+function step(){const next=new Set(),neighbors=new Map();for(const k of cells){const [x,y]=k.split(",").map(Number);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=SIZE||ny>=SIZE)continue;const nk=key(nx,ny);neighbors.set(nk,(neighbors.get(nk)||0)+1);}}for(const [k,n] of neighbors)if(n===3||(n===2&&cells.has(k)))next.add(k);cells=next;generation++;render();}
+document.getElementById("play").addEventListener("click",()=>{if(timer){stop();return;}timer=setInterval(step,220);document.getElementById("play").textContent="⏸ Pausar";});
+document.getElementById("step").addEventListener("click",step);
+document.getElementById("reset").addEventListener("click",()=>load(selected));
+window.addEventListener("resize",draw);
+load(0);
+})();
+</script>
+</body>
+</html>
