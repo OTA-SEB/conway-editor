@@ -14,7 +14,9 @@ Conway Studio ∞ lets you draw, edit, save, and simulate patterns in Conway's G
 
 The goal is simple: **make playing with Conway's Game of Life fun.**
 
-Try **Conway Arcade**, a mobile-friendly challenge mode where you edit patterns and solve small objectives.\n\nExplore the **Pattern Atlas** to watch classic Life patterns evolve, learn what makes them special, and send any pattern straight into the editor.
+Try **Conway Arcade**, a mobile-friendly challenge mode where you edit patterns and solve small objectives.
+
+Explore the **Pattern Atlas** to watch classic Life patterns evolve, learn what makes them special, and send any pattern straight into the editor.
 
 ## Features
 
@@ -68,7 +70,8 @@ Try **Conway Arcade**, a mobile-friendly challenge mode where you edit patterns 
 | `index.html` | Main menu and saved-map library |
 | `editor.html` | Conway pattern editor and simulation |
 | `pixelizer.html` | Image-to-Conway converter |
-| `arcade.html` | Interactive Conway challenge mode |\n| `atlas.html` | Animated reference gallery of classic patterns |
+| `arcade.html` | Interactive Conway challenge mode |
+| `atlas.html` | Animated pattern gallery; send patterns to the editor |
 
 Open `index.html` to start using the project. The other pages can also be opened directly.
 
