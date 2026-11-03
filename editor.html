@@ -688,6 +688,8 @@ function parsePattern(source) {
   const rows=[];
   const transforms=[];
   const primitives=[];
+  const shapes=new Map();
+  let activeShape=null;
   let inside=false;
   let sawPattern=false;
 
@@ -696,16 +698,42 @@ function parsePattern(source) {
     if(!line)continue;
     if(/^#(?:\s|$)/.test(line))continue;
 
-    const header=line.match(/^pattern\s+[a-zA-Z0-9_-]+\s*\{$/);
+    const header=line.match(/^(pattern|shape)\s+([a-zA-Z0-9_-]+)\s*\{$/);
     if(header) {
-      if(inside||sawPattern)throw Error("Solo se permite una declaración pattern por archivo.");
-      inside=true;sawPattern=true;continue;
+      if(inside)throw Error("No se permiten bloques anidados.");
+      if(header[1]==="pattern") {
+        if(sawPattern)throw Error("Solo se permite una declaración pattern por archivo.");
+        inside=true;sawPattern=true;activeShape=null;
+      } else {
+        if(shapes.has(header[2]))throw Error("Nombre de shape duplicado: "+header[2]);
+        activeShape={name:header[2],items:[]};
+        shapes.set(header[2],activeShape);
+      }
+      continue;
     }
     if(line==="}") {
-      if(!inside)throw Error("Cierre } sin una declaración pattern.");
-      inside=false;continue;
+      if(!inside&&!activeShape)throw Error("Cierre } sin un bloque abierto.");
+      inside=false;activeShape=null;continue;
     }
-    if(!inside)throw Error("El contenido debe estar dentro de pattern Nombre { ... }.");
+    if(!inside&&!activeShape)throw Error("El contenido debe estar dentro de pattern o shape.");
+
+    if(activeShape) {
+      const parts=line.split(/\s+/);
+      if(parts[0]==="@cell"&&parts.length===4) {
+        const x=Number(parts[1]),y=Number(parts[2]),symbol=parts[3];
+        if(!Number.isSafeInteger(x)||!Number.isSafeInteger(y)||Math.abs(x)>MAX_PATTERN_DIMENSION||Math.abs(y)>MAX_PATTERN_DIMENSION)
+          throw Error("Coordenadas inválidas en shape "+activeShape.name+".");
+        if(!legend.has(symbol))throw Error("Símbolo sin color definido: "+symbol);
+        activeShape.items.push({x,y,w:1,h:1,color:legend.get(symbol)});
+      } else if(parts[0]==="@rect"&&parts.length===6) {
+        const [x,y,w,h]=parts.slice(1,5).map(Number),symbol=parts[5];
+        if(![x,y,w,h].every(Number.isSafeInteger)||Math.abs(x)>MAX_PATTERN_DIMENSION||Math.abs(y)>MAX_PATTERN_DIMENSION||w<1||h<1||w>MAX_PATTERN_DIMENSION||h>MAX_PATTERN_DIMENSION||x+w>MAX_PATTERN_DIMENSION||y+h>MAX_PATTERN_DIMENSION)
+          throw Error("Dimensiones inválidas en shape "+activeShape.name+".");
+        if(!legend.has(symbol))throw Error("Símbolo sin color definido: "+symbol);
+        activeShape.items.push({x,y,w,h,color:legend.get(symbol)});
+      } else throw Error("Los shapes solo admiten @cell y @rect.");
+      continue;
+    }
 
     if(line.startsWith("@color ")) {
       const match=line.match(/^@color\s+(\S)\s+(#[0-9a-fA-F]{6})$/u);
@@ -716,7 +744,7 @@ function parsePattern(source) {
     }
 
     if(line.startsWith("@cell ")||line.startsWith("@rect ")) {
-      const parts=line.split(/\\s+/);
+      const parts=line.split(/\s+/);
       const isRect=parts[0]==="@rect";
       const expected=isRect?6:4;
       if(parts.length!==expected)throw Error(isRect?
@@ -733,6 +761,18 @@ function parsePattern(source) {
         throw Error("Coordenadas o dimensiones fuera del límite permitido.");
       if(!legend.has(symbol))throw Error("Símbolo sin color definido: "+symbol);
       primitives.push({x,y,w:width,h:height,color:legend.get(symbol)});
+      continue;
+    }
+
+    if(line.startsWith("@use ")) {
+      const match=line.match(/^@use\s+([a-zA-Z0-9_-]+)\s+(-?\d+)\s+(-?\d+)$/);
+      if(!match)throw Error("Usa @use Nombre x y.");
+      const shape=shapes.get(match[1]);
+      if(!shape)throw Error("Shape no definido o declarado después: "+match[1]);
+      const x=Number(match[2]),y=Number(match[3]);
+      if(!Number.isSafeInteger(x)||!Number.isSafeInteger(y)||Math.abs(x)>MAX_PATTERN_DIMENSION||Math.abs(y)>MAX_PATTERN_DIMENSION)
+        throw Error("Coordenadas inválidas en @use.");
+      for(const item of shape.items)primitives.push({...item,x:item.x+x,y:item.y+y});
       continue;
     }
 
@@ -774,9 +814,8 @@ function parsePattern(source) {
     throw Error("Sintaxis no reconocida: "+line.slice(0,60));
   }
 
-  if(inside)throw Error("Falta cerrar el bloque pattern con }.");
+  if(inside||activeShape)throw Error("Falta cerrar un bloque con }.");
   if(!sawPattern)throw Error("No se encontró una declaración pattern.");
-  if(!rows.length)throw Error("No se encontraron filas de células.");
 
   if(!rows.length&&!primitives.length)throw Error("No se encontraron filas ni instrucciones de células.");
   let minX=0,minY=0,maxX=rows.length?Math.max(...rows.map(row=>[...row].length))-1:-1;
