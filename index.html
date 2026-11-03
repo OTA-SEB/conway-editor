@@ -49,7 +49,7 @@ footer{margin-top:40px;color:#7f8da1;font-size:12px}
     </div>
   </div>
   <section>
-    <div class="sectionHead"><h2>Mis mapas</h2><button id="refresh">↻ Actualizar</button></div>
+    <div class="sectionHead"><h2>Mis mapas</h2><div class="actions" style="margin:0"><button id="exportMaps">↓ Exportar copia</button><button id="importMaps">↑ Importar copia</button><button id="refresh">↻ Actualizar</button><input id="mapFile" type="file" accept="application/json,.json" hidden></div></div>
     <div id="maps"></div>
   </section>
   <footer>Conway Studio · Los mapas se guardan localmente en este dispositivo, no en un servidor.</footer>
@@ -82,7 +82,48 @@ function render(){
     actions.append(open,remove);card.append(title,info,actions);root.append(card);
   }
 }
+function validMap(map){
+  if(!map||typeof map!=="object"||typeof map.name!=="string"||!Array.isArray(map.cells)||map.cells.length>100000)return false;
+  return map.cells.every(cell=>cell&&typeof cell.key==="string"&&/^-?\\d+,-?\\d+$/.test(cell.key)&&typeof cell.color==="string"&&/^#[0-9a-f]{3,8}$/i.test(cell.color));
+}
+function exportMaps(){
+  const maps=getMaps().filter(validMap);
+  if(!maps.length){alert("No hay mapas válidos para exportar.");return;}
+  const backup={format:"conway-studio-maps",version:1,exportedAt:new Date().toISOString(),maps};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=url;link.download="conway-studio-backup.json";link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function importMaps(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(String(reader.result));
+      if(!data||data.format!=="conway-studio-maps"||data.version!==1||!Array.isArray(data.maps))throw new Error("Formato no reconocido");
+      if(data.maps.length>1000)throw new Error("La copia contiene demasiados mapas");
+      const incoming=data.maps.filter(validMap);
+      if(!incoming.length)throw new Error("No se encontraron mapas válidos");
+      const current=getMaps(),ids=new Set(current.map(map=>map.id));
+      const imported=incoming.map(map=>{
+        let id=typeof map.id==="string"&&!ids.has(map.id)?map.id:(crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2));
+        ids.add(id);
+        return {...map,id};
+      });
+      localStorage.setItem(KEY,JSON.stringify([...imported,...current]));
+      render();
+      alert("Se importaron "+imported.length+" mapas. Los mapas existentes se conservaron.");
+    }catch(error){alert("No se pudo importar la copia: "+error.message);}
+    finally{document.getElementById("mapFile").value="";}
+  };
+  reader.onerror=()=>alert("No se pudo leer el archivo seleccionado.");
+  reader.readAsText(file);
+}
 document.getElementById("refresh").addEventListener("click",render);
+document.getElementById("exportMaps").addEventListener("click",exportMaps);
+document.getElementById("importMaps").addEventListener("click",()=>document.getElementById("mapFile").click());
+document.getElementById("mapFile").addEventListener("change",event=>importMaps(event.target.files[0]));
 render();
 })();
 </script>
