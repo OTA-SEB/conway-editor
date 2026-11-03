@@ -39,7 +39,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .message{min-height:46px;padding:12px;border-radius:12px;background:#222d3d;color:var(--muted);margin-top:12px}
 .message.win{background:#273927;color:#c9f3b8;border:1px solid #5d874d}
 .help{font-size:13px;margin-top:12px}
-@media(max-width:760px){.layout{grid-template-columns:1fr}.levels{grid-template-columns:repeat(3,minmax(0,1fr))}.level{padding:9px;display:block}.level .num{margin-bottom:6px}.level small{font-size:11px}.panel{padding:12px}}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.levels{grid-template-columns:repeat(2,minmax(0,1fr))}.level{padding:9px;display:block}.level .num{margin-bottom:6px}.level small{font-size:11px}.panel{padding:12px}}
 @media(max-width:420px){header{align-items:flex-start}.levels{grid-template-columns:1fr}.level{display:flex}.level .num{margin:0}.controls button{flex:1}}
 </style>
 </head>
@@ -52,7 +52,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <div class="layout">
 <aside class="panel">
 <h2>Retos</h2>
-<p>Completa los tres para terminar el laboratorio.</p>
+<p>Completa los cuatro para terminar el laboratorio.</p>
 <div class="pill" style="display:inline-block;margin:4px 0 12px">Progreso <b id="progress">0 / 3</b></div>
 <div class="levels" id="levels"></div>
 <button id="resetProgress" style="width:100%;margin-top:10px">Reiniciar progreso</button>
@@ -73,6 +73,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <button id="clear">Limpiar tablero</button>
 </div>
 <div class="controls"><button id="check">✓ Comprobar objetivo</button><button id="next" disabled>Siguiente reto →</button></div>
+<div class="controls"><button id="hintToggle" aria-expanded="false">💡 Mostrar pista</button></div>
+<div id="hintText" class="hint" role="status" hidden></div>
 <div id="message" class="message" role="status">Toca el tablero para cambiar células.</div>
 <p class="help">En móvil: toca o arrastra el dedo. En PC: clic o arrastra. Cada casilla cambia una sola vez por gesto. No hay límite de tiempo.</p>
 </section>
@@ -83,10 +85,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
 "use strict";
 const SIZE=17,canvas=document.getElementById("board"),ctx=canvas.getContext("2d");
 const levels=[
- {name:"El primer pulso",short:"Aprende a nacer",desc:"Añade la célula que falta para que el patrón genere exactamente 3 células tras una generación.",goal:3,gens:1,seed:[[7,8],[8,8]]},
- {name:"Refugio",short:"Construye estabilidad",desc:"Completa el bloque 2×2. Un bloque así permanece quieto: conserva sus 4 células durante 3 generaciones.",goal:4,gens:3,seed:[[7,7],[8,7],[7,8]]},
- {name:"Despegue",short:"Prepara una nave",desc:"Completa el patrón de 5 células. Después de 4 generaciones, la población debe seguir siendo de 5.",goal:5,gens:4,seed:[[8,7],[9,8],[7,9],[8,9]]},
- {name:"Ritmo",short:"Activa un oscilador",desc:"Une las dos células separadas para formar un blinker. Tras 2 generaciones, debe conservar 3 células.",goal:3,gens:2,seed:[[7,8],[9,8]]}
+ {name:"El primer pulso",short:"Aprende a nacer",desc:"Añade la célula que falta para que el patrón genere exactamente 3 células tras una generación.",hint:"Una célula muerta nace cuando tiene exactamente tres vecinas vivas. Busca una posición que comparta vecindad con las dos células actuales.",goal:3,gens:1,seed:[[7,8],[8,8]]},
+ {name:"Refugio",short:"Construye estabilidad",desc:"Completa el bloque 2×2. Un bloque así permanece quieto: conserva sus 4 células durante 3 generaciones.",hint:"Un bloque estable ocupa cuatro casillas que forman un cuadrado. No necesita crecer ni moverse.",goal:4,gens:3,seed:[[7,7],[8,7],[7,8]]},
+ {name:"Despegue",short:"Prepara una nave",desc:"Completa el patrón de 5 células. Después de 4 generaciones, la población debe seguir siendo de 5.",hint:"El planeador tiene cinco células y una forma asimétrica. La orientación importa: piensa en una figura que se desplaza diagonalmente.",goal:5,gens:4,seed:[[8,7],[9,8],[7,9],[8,9]]},
+ {name:"Ritmo",short:"Activa un oscilador",desc:"Une las dos células separadas para formar un blinker. Tras 2 generaciones, debe conservar 3 células.",hint:"El blinker es una línea recta de tres células. En cada generación cambia de orientación y vuelve a su forma inicial tras dos pasos.",goal:3,gens:2,seed:[[7,8],[9,8]]}
 ];
 let levelIndex=0,cells=new Set(),generation=0,won=new Set(),timer=null;
 const PROGRESS_KEY="conway:arcade-progress";
@@ -110,6 +112,10 @@ function loadLevel(i){
  stop();levelIndex=i;generation=0;cells=new Set();levels[i].seed.forEach(([x,y])=>setCell(x,y,true));
  document.getElementById("message").className="message";
  document.getElementById("message").textContent="Toca el tablero para cambiar células.";
+ document.getElementById("hintText").hidden=true;
+ document.getElementById("hintText").textContent="";
+ document.getElementById("hintToggle").textContent="💡 Mostrar pista";
+ document.getElementById("hintToggle").setAttribute("aria-expanded","false");
  document.getElementById("next").disabled=!won.has(i)||i===levels.length-1;
  renderLevels();render();
 }
@@ -185,6 +191,10 @@ function finishPainting(e){
 canvas.addEventListener("pointerup",finishPainting);
 canvas.addEventListener("pointercancel",finishPainting);
 canvas.addEventListener("lostpointercapture",finishPainting);
+document.getElementById("hintToggle").addEventListener("click",()=>{
+ const box=document.getElementById("hintText"),button=document.getElementById("hintToggle"),show=box.hidden;
+ box.textContent=levels[levelIndex].hint;box.hidden=!show;button.textContent=show?"Ocultar pista":"💡 Mostrar pista";button.setAttribute("aria-expanded",String(show));
+});
 document.getElementById("step").addEventListener("click",step);
 document.getElementById("reset").addEventListener("click",()=>loadLevel(levelIndex));
 document.getElementById("clear").addEventListener("click",()=>{if(generation!==0)return;cells.clear();render();});
