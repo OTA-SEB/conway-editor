@@ -700,7 +700,7 @@ function parsePattern(source) {
 
     const header=line.match(/^(pattern|shape)\s+([a-zA-Z0-9_-]+)\s*\{$/);
     if(header) {
-      if(inside)throw Error("No se permiten bloques anidados.");
+      if(inside||activeShape)throw Error("No se permiten bloques anidados.");
       if(header[1]==="pattern") {
         if(sawPattern)throw Error("Solo se permite una declaración pattern por archivo.");
         inside=true;sawPattern=true;activeShape=null;
