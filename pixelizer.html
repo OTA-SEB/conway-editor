@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imagen a Conway · Conway Studio</title>
+<style>
+:root{--bg:#101218;--panel:#1b1f2a;--border:#353b4b;--button:#292f3d;--accent:#3b8e7d;--text:#edf0f7;--muted:#aab4c8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--border)}
+h1{font-size:18px;margin:0;flex:1}
+button,a.button{background:var(--button);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:9px 12px;text-decoration:none;cursor:pointer;font:inherit}
+button:hover,a.button:hover{background:#3a4356}
+button.primary{background:#28685e;border-color:#65d9b9}
+button:disabled{opacity:.4;cursor:not-allowed}
+main{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}
+h2{font-size:15px;margin:0 0 14px}
+label{display:block;color:var(--muted);margin:15px 0 7px}
+input[type=file]{width:100%;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+small,.muted{color:var(--muted)}
+#previewWrap{min-height:360px;display:grid;place-items:center;background:#0d1016;border:1px dashed var(--border);border-radius:8px;overflow:auto;padding:12px}
+#preview{max-width:100%;max-height:65vh;image-rendering:pixelated;image-rendering:crisp-edges}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+#status{min-height:20px;margin-top:10px;color:var(--muted)}
+@media(max-width:760px){main{grid-template-columns:1fr;margin:14px auto}#previewWrap{min-height:240px}header{flex-wrap:wrap}h1{min-width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🖼️ Imagen a Conway</h1>
+  <a class="button" href="./index.html">← Volver a Conway Studio</a>
+</header>
+<main>
+  <section class="panel">
+    <h2>Configurar imagen</h2>
+    <label for="image">Selecciona una imagen</label>
+    <input id="image" type="file" accept="image/*">
+    <label for="resolution">Resolución horizontal: <strong id="resolutionValue">48</strong> píxeles</label>
+    <input id="resolution" type="range" min="8" max="120" value="48">
+    <p class="muted">La altura se ajusta automáticamente para conservar la proporción. Cada píxel se convierte en una célula de Conway.</p>
+    <div class="actions">
+      <button id="download" disabled>Descargar .conway</button>
+      <button id="send" class="primary" disabled>Enviar a Conway Studio</button>
+    </div>
+    <p id="status">Sube una imagen para comenzar.</p>
+    <small>La conversión se realiza en tu navegador; la imagen no se sube a ningún servidor.</small>
+  </section>
+  <section class="panel">
+    <h2>Previsualización pixelada</h2>
+    <div id="previewWrap"><canvas id="preview" width="1" height="1"></canvas></div>
+  </section>
+</main>
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+const fileInput=$("image"),resolution=$("resolution"),preview=$("preview");
+const ctx=preview.getContext("2d",{willReadFrequently:true});
+const symbols="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+let sourceImage=null,patternCode="",objectUrl=null;
+
+function quantize(value){return Math.round(value/127.5)*128;}
+function makePattern(){
+  if(!sourceImage)return;
+  const targetWidth=Number(resolution.value);
+  const ratio=sourceImage.naturalHeight/sourceImage.naturalWidth;
+  const targetHeight=Math.max(1,Math.min(120,Math.round(targetWidth*ratio)));
+  const work=document.createElement("canvas");
+  work.width=targetWidth;work.height=targetHeight;
+  const workCtx=work.getContext("2d",{willReadFrequently:true});
+  workCtx.clearRect(0,0,targetWidth,targetHeight);
+  workCtx.drawImage(sourceImage,0,0,targetWidth,targetHeight);
+  const pixels=workCtx.getImageData(0,0,targetWidth,targetHeight).data;
+  const colorSymbols=new Map(),colorLines=[],rows=[];
+  let nextSymbol=0;
+  for(let y=0;y<targetHeight;y++){
+    let row="";
+    for(let x=0;x<targetWidth;x++){
+      const i=(y*targetWidth+x)*4;
+      if(pixels[i+3]<32){row+=".";continue;}
+      const r=quantize(pixels[i]),g=quantize(pixels[i+1]),b=quantize(pixels[i+2]);
+      const color="#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+      if(!colorSymbols.has(color)){
+        if(nextSymbol>=symbols.length){row+=".";continue;}
+        const symbol=symbols[nextSymbol++];
+        colorSymbols.set(color,symbol);
+        colorLines.push("  @color "+symbol+" "+color);
+      }
+      row+=colorSymbols.get(color);
+    }
+    rows.push("  "+row);
+  }
+  patternCode=["# CONWAY/1","pattern Image {",...colorLines,...rows,"}"].join("\n");
+  preview.width=targetWidth*8;preview.height=targetHeight*8;
+  ctx.imageSmoothingEnabled=false;
+  for(let y=0;y<targetHeight;y++)for(let x=0;x<targetWidth;x++){
+    const i=(y*targetWidth+x)*4;
+    if(pixels[i+3]<32)continue;
+    ctx.fillStyle="#"+[quantize(pixels[i]),quantize(pixels[i+1]),quantize(pixels[i+2])]
+      .map(v=>v.toString(16).padStart(2,"0")).join("");
+    ctx.fillRect(x*8,y*8,8,8);
+  }
+  $("resolutionValue").textContent=targetWidth;
+  $("status").textContent="Listo: "+targetWidth+" × "+targetHeight+" · "+colorSymbols.size+" colores.";
+  $("download").disabled=false;
+  $("send").disabled=false;
+}
+fileInput.addEventListener("change",()=>{
+  const file=fileInput.files&&fileInput.files[0];
+  if(!file)return;
+  if(!file.type.startsWith("image/")){$("status").textContent="El archivo no parece ser una imagen.";return;}
+  if(objectUrl)URL.revokeObjectURL(objectUrl);
+  objectUrl=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{sourceImage=img;makePattern();};
+  img.onerror=()=>{$("status").textContent="No se pudo abrir esa imagen.";};
+  img.src=objectUrl;
+});
+resolution.addEventListener("input",()=>{if(sourceImage)makePattern();else $("resolutionValue").textContent=resolution.value;});
+$("download").addEventListener("click",()=>{
+  if(!patternCode)return;
+  const blob=new Blob([patternCode],{type:"text/plain;charset=utf-8"});
+  const url=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=url;link.download="imagen.conway";link.click();
+  URL.revokeObjectURL(url);
+});
+$("send").addEventListener("click",()=>{
+  if(!patternCode)return;
+  try{localStorage.setItem("conway:pending-image-pattern",patternCode);}
+  catch{$("status").textContent="No se pudo preparar el patrón en este navegador.";return;}
+  location.href="./index.html";
+});
+})();
+</script>
+</body>
+</html>
