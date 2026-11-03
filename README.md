@@ -35,7 +35,7 @@ Explore the **Pattern Atlas** to watch classic Life patterns evolve, learn what 
 
 ### Conway pattern language
 - Read and write patterns using the documented Conway text format.
-- Version 2 supports named patterns, color symbols, plain and compressed rows, coordinate cells, filled rectangles, and mirror/rotation transforms.
+- Version 2 supports named patterns, color symbols, plain and compressed rows, coordinate cells, filled rectangles, reusable shapes, and mirror/rotation transforms.
 - Version 1 patterns remain supported.
 - See [CONWAY.md](CONWAY.md) for the syntax reference and examples.
 
