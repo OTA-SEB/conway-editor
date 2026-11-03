@@ -22,11 +22,11 @@ The goal is simple: **make playing with Conway's Game of Life fun.**
 - Watch patterns evolve according to the classic Game of Life rules.
 
 ### Drawing and editing
-- Draw and erase cells with adjustable brush sizes.
+- Select the active tool from one compact tool selector: brush, eraser, bucket, selection, line, rectangle, ellipse, or canvas movement.
+- Change cell colors and brush size.
 - Fill or recolor connected regions.
 - Select, copy, paste, and move patterns.
 - Draw lines, rectangles, and ellipses, outlined or filled.
-- Change cell colors and place built-in patterns.
 - Undo and redo editing actions.
 
 ### Workspace
@@ -34,6 +34,12 @@ The goal is simple: **make playing with Conway's Game of Life fun.**
 - Work on a large, effectively unbounded canvas.
 - Import and export patterns using Conway Studio's text-based pattern format.
 - Export selected areas as PNG images.
+
+### Mobile interface
+- Responsive layouts for the main menu, editor, and image converter.
+- Larger touch targets and compact controls.
+- Choose drawing tools from a single selector instead of a row of separate tool buttons.
+- Use the on-screen zoom controls and the canvas-movement tool to navigate on touch devices.
 
 ### Image converter
 - Open **Image → Conway** from the main menu.
