@@ -616,49 +616,54 @@ function validColor(s) {
   return typeof s==="string"&&/^#[0-9a-fA-F]{6}$/.test(s);
 }
 
-// Lenguaje Conway:
-// Las filas usan símbolos de un carácter.
-// . representa una celda vacía; cada símbolo vivo puede tener su color.
-// @color define el color de un símbolo.
-// # COMPACT conserva los colores y dimensiones exactos como JSON.
+// Conway/2: filas legibles o comprimidas mediante repeticiones.
 function encodePattern(data,name="Pattern") {
-  const colors=[...new Set(data.cells.map(c=>c.color))];
+  const colors=[...new Set(data.cells.map(cell=>cell.color))];
   const symbols="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const safeName=String(name).replace(/[^a-zA-Z0-9_-]/g,"")||"Pattern";
+
+  // The compact payload preserves patterns with more colors than the text palette can express.
+  if(colors.length>symbols.length) {
+    const compact={v:1,w:data.w,h:data.h,cells:data.cells};
+    return ["# CONWAY/2",`pattern ${safeName} {`,
+      "# COMPACT: "+JSON.stringify(compact),"}"].join("\n");
+  }
+
   const colorToSymbol=new Map();
   const lines=[];
-  colors.slice(0,symbols.length).forEach((color,i)=>{
+  colors.forEach((color,i)=>{
     colorToSymbol.set(color,symbols[i]);
     lines.push(`  @color ${symbols[i]} ${color}`);
   });
-
   if(!colors.length)lines.push("  @color O #54e6a5");
-  const rows=[];
+
+  const cellsByPosition=new Map(data.cells.map(cell=>[`${cell.x},${cell.y}`,cell]));
   for(let y=0;y<data.h;y++) {
-    let row="";
+    let raw="";
     for(let x=0;x<data.w;x++) {
-      const c=data.cells.find(c=>c.x===x&&c.y===y);
-      row+=c?(colorToSymbol.get(c.color)||"O"):" .".trim();
+      const cell=cellsByPosition.get(`${x},${y}`);
+      raw+=cell?(colorToSymbol.get(cell.color)||"O"):".";
     }
-    rows.push("  "+row);
+    const runs=[];
+    for(let i=0;i<raw.length;) {
+      let j=i+1;
+      while(j<raw.length&&raw[j]===raw[i])j++;
+      runs.push((j-i>1?`${j-i}*`:"")+raw[i]);
+      i=j;
+    }
+    const compressed="@row "+runs.join(" ");
+    lines.push("  "+(compressed.length<raw.length?compressed:raw));
   }
 
-  const safeName=String(name).replace(/[^a-zA-Z0-9_-]/g,"")||"Pattern";
-  const compact={v:1,w:data.w,h:data.h,cells:data.cells};
-  return [
-    "# CONWAY/1",
-    `pattern ${safeName} {`,
-    ...lines,
-    ...rows,
-    "}"
-  ].join("\n");
+  return ["# CONWAY/2",`pattern ${safeName} {`,...lines,"}"].join("\n");
 }
 
 function parsePattern(source) {
   if(typeof source!=="string"||source.length>2_000_000)
     throw Error("El código está vacío o es demasiado grande.");
 
-  // Preferir el bloque compacto cuando exista para conservar los datos exactos.
-  const compactLine=source.split(/\r?\n/).find(l=>l.startsWith("# COMPACT:"));
+  // Legacy compact payloads and high-color exports remain supported.
+  const compactLine=source.split(/\r?\n/).find(line=>line.startsWith("# COMPACT:"));
   if(compactLine) {
     let obj;
     try { obj=JSON.parse(compactLine.slice("# COMPACT:".length).trim()); }
@@ -670,10 +675,10 @@ function parsePattern(source) {
        obj.cells.length>MAX_CELLS)throw Error("Dimensiones o datos inválidos.");
 
     const out=[];
-    for(const c of obj.cells) {
-      if(!c||!Number.isInteger(c.x)||!Number.isInteger(c.y)||
-         c.x<0||c.y<0||c.x>=obj.w||c.y>=obj.h)continue;
-      out.push({x:c.x,y:c.y,color:validColor(c.color)?c.color:$("color").value});
+    for(const cell of obj.cells) {
+      if(!cell||!Number.isInteger(cell.x)||!Number.isInteger(cell.y)||
+         cell.x<0||cell.y<0||cell.x>=obj.w||cell.y>=obj.h)continue;
+      out.push({x:cell.x,y:cell.y,color:validColor(cell.color)?cell.color:$("color").value});
     }
     return {w:obj.w,h:obj.h,cells:out};
   }
@@ -682,66 +687,72 @@ function parsePattern(source) {
   const legend=new Map([["O",$("color").value]]);
   const rows=[];
   let inside=false;
+  let sawPattern=false;
 
-  for(let raw of lines) {
+  for(const raw of lines) {
     const line=raw.trim();
     if(!line)continue;
-
-    // Los comentarios empiezan con # seguido de espacio o al final.
-    // Así, # también puede usarse como símbolo dentro de una fila.
     if(/^#(?:\s|$)/.test(line))continue;
 
-    if(/^pattern\s+[a-zA-Z0-9_-]+\s*\{$/.test(line)) {
-      inside=true;
-      continue;
+    const header=line.match(/^pattern\s+[a-zA-Z0-9_-]+\s*\{$/);
+    if(header) {
+      if(inside||sawPattern)throw Error("Solo se permite una declaración pattern por archivo.");
+      inside=true;sawPattern=true;continue;
     }
-
     if(line==="}") {
-      inside=false;
-      continue;
+      if(!inside)throw Error("Cierre } sin una declaración pattern.");
+      inside=false;continue;
     }
+    if(!inside)throw Error("El contenido debe estar dentro de pattern Nombre { ... }.");
 
     if(line.startsWith("@color ")) {
-      const m=line.match(/^@color\s+(\S)\s+(#[0-9a-fA-F]{6})$/u);
-      if(!m)
-        throw Error("Directiva de color inválida: usa @color SÍMBOLO #RRGGBB.");
-
-      if(m[1]===".")
-        throw Error("El punto (.) está reservado para una celda vacía.");
-
-      legend.set(m[1],m[2]);
+      const match=line.match(/^@color\s+(\S)\s+(#[0-9a-fA-F]{6})$/u);
+      if(!match)throw Error("Directiva de color inválida: usa @color SÍMBOLO #RRGGBB.");
+      if(match[1]===".")throw Error("El punto (.) está reservado para una celda vacía.");
+      legend.set(match[1],match[2]);
       continue;
     }
 
-    // Cada carácter que no sea espacio puede ser un símbolo de célula.
-    // El punto se reserva para las células vacías.
+    if(line.startsWith("@row ")) {
+      const tokens=line.slice(5).trim().split(/\s+/);
+      if(!tokens.length||!tokens[0])throw Error("La fila @row necesita al menos un bloque.");
+      let expanded="";
+      for(const token of tokens) {
+        const match=token.match(/^(?:(\d+)\*)?(.)$/u);
+        if(!match)throw Error("Bloque @row inválido: "+token);
+        const count=match[1]?Number(match[1]):1;
+        if(!Number.isSafeInteger(count)||count<1||count>MAX_PATTERN_DIMENSION||
+           expanded.length+count>MAX_PATTERN_DIMENSION)
+          throw Error("La fila @row supera el ancho máximo.");
+        expanded+=match[2].repeat(count);
+      }
+      rows.push(expanded);
+      continue;
+    }
+
     if(/^[^\s]+$/u.test(line)) {
       rows.push(line);
       continue;
     }
-
     throw Error("Sintaxis no reconocida: "+line.slice(0,60));
   }
 
+  if(inside)throw Error("Falta cerrar el bloque pattern con }.");
+  if(!sawPattern)throw Error("No se encontró una declaración pattern.");
   if(!rows.length)throw Error("No se encontraron filas de células.");
 
-  const w=Math.max(...rows.map(r=>[...r].length));
+  const w=Math.max(...rows.map(row=>[...row].length));
   const h=rows.length;
-
   if(w>MAX_PATTERN_DIMENSION||h>MAX_PATTERN_DIMENSION)
     throw Error("El patrón es demasiado grande.");
 
   const out=[];
-
-  rows.forEach((row,y)=>[...row].forEach((ch,x)=>{
-    if(ch===".")return;
-
-    if(!legend.has(ch))
-      throw Error("Símbolo sin color definido: "+ch);
-
-    out.push({x,y,color:legend.get(ch)});
+  rows.forEach((row,y)=>[...row].forEach((symbol,x)=>{
+    if(symbol===".")return;
+    if(!legend.has(symbol))throw Error("Símbolo sin color definido: "+symbol);
+    out.push({x,y,color:legend.get(symbol)});
+    if(out.length>MAX_CELLS)throw Error("El patrón supera el máximo de células vivas.");
   }));
-
   return {w,h,cells:out};
 }
 
