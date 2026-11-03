@@ -111,8 +111,9 @@ label{display:flex;align-items:center;gap:5px}
 
   <label>Cubeta
     <select id="bucketMode">
-      <option value="state">Región por estado</option>
-      <option value="color">Región por color</option>
+      <option value="state">Rellenar región</option>
+      <option value="color">Recolorear región</option>
+      <option value="water">Agua (borrador de cubeta)</option>
     </select>
   </label>
 
@@ -1022,10 +1023,11 @@ function floodFill(start) {
   const targetColor=cells.get(startKey);
   const mode=$("bucketMode").value;
 
-  if(mode==="color"&&!startAlive)return;
+  // Los modos de color y agua solo actúan sobre células ocupadas.
+  if((mode==="color"||mode==="water")&&!startAlive)return;
 
   const replacement=$("color").value;
-  if(mode==="color"&&targetColor===replacement)return;
+  if(mode!=="water"&&startAlive&&targetColor===replacement)return;
 
   // Primero recopilar toda la región sin modificar cells.
   // Si se pinta mientras se busca, las celdas recién pintadas dejan
@@ -1068,7 +1070,8 @@ function floodFill(start) {
   for(const [x,y] of region) {
     const k=key(x,y);
 
-    if(startAlive)cells.set(k,replacement);
+    if(mode==="water")cells.delete(k);
+    else if(startAlive)cells.set(k,replacement);
     else setCell(x,y,replacement);
   }
 
