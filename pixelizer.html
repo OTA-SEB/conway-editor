@@ -62,11 +62,11 @@ const ctx=preview.getContext("2d",{willReadFrequently:true});
 const symbols="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 let sourceImage=null,patternCode="",objectUrl=null;
 
-function quantize(value){return Math.round(value/127.5)*128;}
+function quantize(value){return Math.min(255,Math.round(value/127.5)*128);}
 function makePattern(){
   if(!sourceImage)return;
-  const targetWidth=Number(resolution.value);
   const ratio=sourceImage.naturalHeight/sourceImage.naturalWidth;
+  const targetWidth=Math.max(1,Math.min(Number(resolution.value),Math.floor(120/ratio)));
   const targetHeight=Math.max(1,Math.min(120,Math.round(targetWidth*ratio)));
   const work=document.createElement("canvas");
   work.width=targetWidth;work.height=targetHeight;
