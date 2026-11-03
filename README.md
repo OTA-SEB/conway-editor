@@ -33,6 +33,12 @@ Explore the **Pattern Atlas** to watch classic Life patterns evolve, learn what 
 - Draw lines, rectangles, and ellipses, outlined or filled.
 - Undo and redo editing actions.
 
+### Conway pattern language
+- Read and write patterns using the documented Conway text format.
+- Version 2 supports named patterns, color symbols, plain rows, and run-length-compressed `@row` blocks.
+- Version 1 patterns remain supported.
+- See [CONWAY.md](CONWAY.md) for the syntax reference and examples.
+
 ### Workspace
 - Zoom in and out, center the view, and move around the board.
 - Work on a large, effectively unbounded canvas.
