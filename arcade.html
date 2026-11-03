@@ -85,7 +85,8 @@ const SIZE=17,canvas=document.getElementById("board"),ctx=canvas.getContext("2d"
 const levels=[
  {name:"El primer pulso",short:"Aprende a nacer",desc:"Añade la célula que falta para que el patrón genere exactamente 3 células tras una generación.",goal:3,gens:1,seed:[[7,8],[8,8]]},
  {name:"Refugio",short:"Construye estabilidad",desc:"Completa el bloque 2×2. Un bloque así permanece quieto: conserva sus 4 células durante 3 generaciones.",goal:4,gens:3,seed:[[7,7],[8,7],[7,8]]},
- {name:"Despegue",short:"Prepara una nave",desc:"Completa el patrón de 5 células. Después de 4 generaciones, la población debe seguir siendo de 5.",goal:5,gens:4,seed:[[8,7],[9,8],[7,9],[8,9]]}
+ {name:"Despegue",short:"Prepara una nave",desc:"Completa el patrón de 5 células. Después de 4 generaciones, la población debe seguir siendo de 5.",goal:5,gens:4,seed:[[8,7],[9,8],[7,9],[8,9]]},
+ {name:"Ritmo",short:"Activa un oscilador",desc:"Une las dos células separadas para formar un blinker. Tras 2 generaciones, debe conservar 3 células.",goal:3,gens:2,seed:[[7,8],[9,8]]}
 ];
 let levelIndex=0,cells=new Set(),generation=0,won=new Set(),timer=null;
 const PROGRESS_KEY="conway:arcade-progress";
