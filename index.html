@@ -1032,9 +1032,12 @@ function floodFill(start) {
   // de coincidir con el estado original y la búsqueda se corta.
   const matches=(x,y)=>{
     const k=key(x,y);
-    return mode==="color"
+
+    // Una célula ocupada selecciona su región del mismo color.
+    // Un espacio vacío selecciona la región vacía.
+    return startAlive
       ? cells.has(k)&&cells.get(k)===targetColor
-      : cells.has(k)===startAlive;
+      : !cells.has(k);
   };
 
   const queue=[[start.x,start.y]];
@@ -1065,8 +1068,7 @@ function floodFill(start) {
   for(const [x,y] of region) {
     const k=key(x,y);
 
-    if(mode==="color")cells.set(k,replacement);
-    else if(startAlive)cells.delete(k);
+    if(startAlive)cells.set(k,replacement);
     else setCell(x,y,replacement);
   }
 
