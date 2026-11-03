@@ -46,7 +46,7 @@ Explore the **Pattern Atlas** to watch classic Life patterns evolve, learn what 
 - Use the on-screen zoom controls and the canvas-movement tool to navigate on touch devices.
 
 ### Conway Arcade
-- Three bite-sized challenges based on Conway's rules.
+- Four bite-sized challenges based on Conway's rules, including a blinker oscillator.
 - Edit a pattern, advance generations, and reach an exact population target.
 - Completed challenges are saved in the browser's `localStorage` on the current device; no account or backend required.
 - Touch-friendly board and controls for mobile, including drag-to-paint editing.
