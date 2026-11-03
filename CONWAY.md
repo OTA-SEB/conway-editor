@@ -59,6 +59,31 @@ pattern Linea {
 
 El editor elige automáticamente entre fila normal y comprimida al generar código.
 
+## Transformaciones
+
+Puedes transformar el patrón después de definir sus filas:
+
+- `@mirror horizontal`: refleja de izquierda a derecha.
+- `@mirror vertical`: refleja de arriba abajo.
+- `@mirror both`: aplica ambos reflejos.
+- `@rotate 90`, `@rotate 180` o `@rotate 270`: gira en sentido horario.
+
+Las transformaciones se aplican en el orden en que aparecen. Puedes combinarlas:
+
+```conway
+# CONWAY/2
+pattern Flecha {
+  @color A #65D9B9
+  A..
+  AAA
+  A..
+  @rotate 90
+  @mirror vertical
+}
+```
+
+No necesitas reescribir manualmente las filas para crear variantes simétricas o rotadas.
+
 ## Compatibilidad
 
 - Los patrones antiguos `CONWAY/1` siguen siendo compatibles.
