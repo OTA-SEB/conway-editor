@@ -204,7 +204,8 @@ function playSound(kind){
       play:{frequency:360,end:520,duration:.11,wave:"triangle"},
       pause:{frequency:420,end:280,duration:.11,wave:"triangle"},
       undo:{frequency:330,end:240,duration:.08,wave:"sine"},
-      redo:{frequency:390,end:560,duration:.08,wave:"sine"}
+      redo:{frequency:390,end:560,duration:.08,wave:"sine"},
+      tool:{frequency:700,end:540,duration:.045,wave:"triangle"}
     };
     const sound=presets[kind]||presets.paint;
     const now=audioContext.currentTime;
@@ -684,6 +685,7 @@ async function pasteFromClipboard() {
 }
 
 function selectTool(next) {
+  if(next!==tool)playSound("tool");
   tool=next;
   pastePreview=null;
   pendingPattern=null;
