@@ -59,6 +59,28 @@ pattern Linea {
 
 El editor elige automáticamente entre fila normal y comprimida al generar código.
 
+## Instrucciones geométricas
+
+Además de dibujar filas, puedes colocar células o rectángulos mediante coordenadas:
+
+- `@cell x y SIMBOLO`: coloca una célula en una coordenada.
+- `@rect x y ancho alto SIMBOLO`: dibuja un rectángulo relleno.
+
+Las coordenadas pueden ser negativas. El editor ajusta el origen automáticamente para que todo el patrón quepa en el área importada. Las instrucciones respetan los colores declarados con `@color`.
+
+```conway
+# CONWAY/2
+pattern Casa {
+  @color A #65D9B9
+  @color B #F4B860
+  @rect 0 2 7 4 A
+  @rect 2 0 3 2 B
+  @cell 3 4 B
+}
+```
+
+Las instrucciones pueden mezclarse con filas normales y filas `@row`. Si dos instrucciones colocan una célula en la misma posición, se conserva la primera.
+
 ## Transformaciones
 
 Puedes transformar el patrón después de definir sus filas:
