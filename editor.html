@@ -108,7 +108,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 
 <header id="appHeader">
   <div class="topbar"><strong>Conway Studio ∞</strong><div class="topActions">
-    <button id="mainMenu">⌂ Menú</button><button id="saveMap">💾 Guardar</button><button id="play">▶ Jugar</button>
+    <button id="mainMenu">⌂ Menú</button><button id="saveMap">💾 Guardar</button><button id="soundToggle" type="button" aria-pressed="true">🔊 Sonido</button><button id="play">▶ Jugar</button>
   </div></div>
   <div class="toolRow">
     <label class="toolPickerLabel">Herramienta<select id="toolPicker">
@@ -181,6 +181,45 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 "use strict";
 
 const $ = id => document.getElementById(id);
+let audioContext=null;
+let soundEnabled=(()=>{try{return localStorage.getItem("conway:sound")!=="off";}catch{return true;}})();
+let generationSoundCounter=0;
+
+function syncSoundButton(){
+  const button=$("soundToggle");
+  button.textContent=soundEnabled?"🔊 Sonido":"🔇 Silencio";
+  button.setAttribute("aria-pressed",String(soundEnabled));
+}
+function playSound(kind){
+  if(!soundEnabled)return;
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return;
+  try{
+    if(!audioContext)audioContext=new AudioContextClass();
+    if(audioContext.state==="suspended")audioContext.resume().catch(()=>{});
+    const presets={
+      paint:{frequency:620,end:760,duration:.055,wave:"triangle"},
+      erase:{frequency:250,end:150,duration:.075,wave:"sine"},
+      generation:{frequency:420,end:590,duration:.09,wave:"sine"},
+      play:{frequency:360,end:520,duration:.11,wave:"triangle"},
+      pause:{frequency:420,end:280,duration:.11,wave:"triangle"},
+      undo:{frequency:330,end:240,duration:.08,wave:"sine"},
+      redo:{frequency:390,end:560,duration:.08,wave:"sine"}
+    };
+    const sound=presets[kind]||presets.paint;
+    const now=audioContext.currentTime;
+    const oscillator=audioContext.createOscillator();
+    const gain=audioContext.createGain();
+    oscillator.type=sound.wave;
+    oscillator.frequency.setValueAtTime(sound.frequency,now);
+    oscillator.frequency.exponentialRampToValueAtTime(sound.end,now+sound.duration);
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.exponentialRampToValueAtTime(.055,now+.008);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+sound.duration);
+    oscillator.connect(gain);gain.connect(audioContext.destination);
+    oscillator.start(now);oscillator.stop(now+sound.duration+.01);
+  }catch{}
+}
 const canvas = $("world");
 const ctx = canvas.getContext("2d");
 const {encodePattern,parsePattern} = window.ConwayLanguage;
@@ -354,6 +393,7 @@ function updateHistoryButtons() {
 function undo() {
   const previous=history.undo(cells);
   if(!previous)return;
+  playSound("undo");
   cells=previous;
   render();
   updateHistoryButtons();
@@ -362,6 +402,7 @@ function undo() {
 function redo() {
   const next=history.redo(cells);
   if(!next)return;
+  playSound("redo");
   cells=next;
   render();
   updateHistoryButtons();
@@ -373,7 +414,7 @@ function beginGesture() {
 }
 
 function finishGesture() {
-  if(gestureBefore&&gestureChanged)saveUndo(gestureBefore);
+  if(gestureBefore&&gestureChanged){saveUndo(gestureBefore);playSound(tool==="eraser"?"erase":"paint");}
   gestureBefore=null;
   gestureChanged=false;
   updateHistoryButtons();
@@ -911,11 +952,14 @@ function floodFill(start) {
 
 function nextGeneration() {
   cells=simulateGeneration(cells);
+  generationSoundCounter++;
+  if(!running||generationSoundCounter%4===0)playSound("generation");
   render();
 }
 
 function togglePlay() {
   running=!running;
+  playSound(running?"play":"pause");
   $("play").textContent=running?"⏸ Pausar":"▶ Jugar";
 
   if(running)timer=setInterval(nextGeneration,120);
@@ -925,6 +969,13 @@ function togglePlay() {
   }
 }
 
+$("soundToggle").addEventListener("click",()=>{
+  soundEnabled=!soundEnabled;
+  try{localStorage.setItem("conway:sound",soundEnabled?"on":"off");}catch{}
+  syncSoundButton();
+  if(soundEnabled)playSound("play");
+});
+syncSoundButton();
 $("play").addEventListener("click",togglePlay);
 $("step").addEventListener("click",nextGeneration);
 
