@@ -50,6 +50,7 @@ canvas{display:block;width:100%;aspect-ratio:1;background:#0c1119;border:1px sol
 <canvas id="board" width="600" height="600" aria-label="Vista animada del patrón seleccionado"></canvas>
 <div class="info"><span class="pill">Generación <b id="generation">0</b></span><span class="pill">Células vivas <b id="population">5</b></span><span class="pill" id="kind"></span></div>
 <div class="controls"><button id="play" class="primary">▶ Animar</button><button id="step">＋ Un paso</button><button id="reset">↺ Reiniciar</button></div>
+<div class="controls"><button id="openEditor" class="primary">✎ Editar este patrón</button></div>
 <div class="description" id="description"></div>
 <p style="font-size:13px">La simulación usa bordes muertos: las células que salen del tablero desaparecen.</p>
 </section>
@@ -80,6 +81,17 @@ function step(){const next=new Set(),neighbors=new Map();for(const k of cells){c
 document.getElementById("play").addEventListener("click",()=>{if(timer){stop();return;}timer=setInterval(step,220);document.getElementById("play").textContent="⏸ Pausar";});
 document.getElementById("step").addEventListener("click",step);
 document.getElementById("reset").addEventListener("click",()=>load(selected));
+document.getElementById("openEditor").addEventListener("click",()=>{
+  const pattern=patterns[selected];
+  const xs=pattern.cells.map(([x])=>x),ys=pattern.cells.map(([,y])=>y);
+  const minX=Math.min(...xs),minY=Math.min(...ys);
+  const w=Math.max(...xs)-minX+1,h=Math.max(...ys)-minY+1;
+  const payload={v:1,w,h,cells:pattern.cells.map(([x,y])=>({x:x-minX,y:y-minY,color:"#65d9b9"}))};
+  try{
+    localStorage.setItem("conway:pending-atlas-pattern","# COMPACT: "+JSON.stringify(payload));
+    location.href="./editor.html";
+  }catch{alert("No se pudo preparar el patrón para el editor.");}
+});
 window.addEventListener("resize",draw);
 load(0);
 })();
