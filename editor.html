@@ -173,6 +173,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <div id="toast"></div>
 
 <script src="conway-language.js"></script>
+<script src="conway-engine.js"></script>
 <script>
 (() => {
 "use strict";
@@ -181,6 +182,7 @@ const $ = id => document.getElementById(id);
 const canvas = $("world");
 const ctx = canvas.getContext("2d");
 const {encodePattern,parsePattern} = window.ConwayLanguage;
+const {nextGeneration:simulateGeneration} = window.ConwayEngine;
 
 const palette = [
   "#ff595e","#ff924c","#ffca3a","#c5f550",
@@ -948,35 +950,7 @@ function floodFill(start) {
 }
 
 function nextGeneration() {
-  const neighbors=new Map();
-
-  for(const [k,color] of cells) {
-    const [x,y]=parseKey(k);
-
-    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++) {
-      if(dx===0&&dy===0)continue;
-
-      const nk=key(x+dx,y+dy);
-
-      if(!neighbors.has(nk))neighbors.set(nk,[]);
-      neighbors.get(nk).push(color);
-    }
-  }
-
-  const next=new Map();
-
-  for(const [k,parents] of neighbors) {
-    const n=parents.length;
-
-    if(cells.has(k)) {
-      if(n===2||n===3)next.set(k,cells.get(k));
-    } else if(n===3) {
-      // Regla genética: el color de una célula nueva se elige de un padre al azar.
-      next.set(k,parents[Math.floor(Math.random()*parents.length)]);
-    }
-  }
-
-  cells=next;
+  cells=simulateGeneration(cells);
   render();
 }
 
