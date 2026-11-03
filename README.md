@@ -12,7 +12,9 @@
 
 Conway Studio ∞ lets you draw, edit, save, and simulate patterns in Conway's Game of Life. It includes a main menu, a full editor, and an image-to-pattern converter.
 
-The goal is simple: **make playing with Conway's Game of Life fun.**\n\nTry **Conway Arcade**, a mobile-friendly challenge mode where you edit patterns and solve small objectives.
+The goal is simple: **make playing with Conway's Game of Life fun.**
+
+Try **Conway Arcade**, a mobile-friendly challenge mode where you edit patterns and solve small objectives.
 
 ## Features
 
@@ -41,7 +43,13 @@ The goal is simple: **make playing with Conway's Game of Life fun.**\n\nTry **Co
 - Choose drawing tools from a single selector instead of a row of separate tool buttons.
 - Use the on-screen zoom controls and the canvas-movement tool to navigate on touch devices.
 
-### Conway Arcade\n- Three bite-sized challenges based on Conway's rules.\n- Edit a pattern, advance generations, and reach an exact population target.\n- Progress is tracked for the current session; no account or backend required.\n- Touch-friendly board and controls for mobile.\n\n### Image converter
+### Conway Arcade
+- Three bite-sized challenges based on Conway's rules.
+- Edit a pattern, advance generations, and reach an exact population target.
+- Progress is tracked for the current session; no account or backend required.
+- Touch-friendly board and controls for mobile.
+
+### Image converter
 - Open **Image → Conway** from the main menu.
 - Load an image from your device and convert it into a pixel pattern.
 - Adjust the output resolution and preview the result.
@@ -59,7 +67,8 @@ The goal is simple: **make playing with Conway's Game of Life fun.**\n\nTry **Co
 | --- | --- |
 | `index.html` | Main menu and saved-map library |
 | `editor.html` | Conway pattern editor and simulation |
-| `pixelizer.html` | Image-to-Conway converter |\n| `arcade.html` | Interactive Conway challenge mode |
+| `pixelizer.html` | Image-to-Conway converter |
+| `arcade.html` | Interactive Conway challenge mode |
 
 Open `index.html` to start using the project. The other pages can also be opened directly.
 
