@@ -207,7 +207,9 @@ function playSound(kind){
       redo:{frequency:390,end:560,duration:.08,wave:"sine"},
       tool:{frequency:700,end:540,duration:.045,wave:"triangle"},
       fill:{frequency:280,end:460,duration:.13,wave:"sine"},
-      pattern:{frequency:520,end:820,duration:.16,wave:"triangle"}
+      pattern:{frequency:520,end:820,duration:.16,wave:"triangle"},
+      zoom:{frequency:390,end:560,duration:.055,wave:"sine"},
+      center:{frequency:480,end:360,duration:.09,wave:"sine"}
     };
     const sound=presets[kind]||presets.paint;
     const now=audioContext.currentTime;
@@ -701,8 +703,8 @@ function selectTool(next) {
   render();
 }
 $("toolPicker").addEventListener("change",e=>selectTool(e.target.value));
-$("zoomOut").addEventListener("click",()=>zoom(1/1.2));
-$("zoomIn").addEventListener("click",()=>zoom(1.2));
+$("zoomOut").addEventListener("click",()=>zoom(1/1.2,undefined,undefined,true));
+$("zoomIn").addEventListener("click",()=>zoom(1.2,undefined,undefined,true));
 $("brushSize").addEventListener("input",()=>$("sizeValue").textContent=$("brushSize").value);
 canvas.addEventListener("contextmenu",e=>e.preventDefault());
 
@@ -884,11 +886,12 @@ canvas.addEventListener("wheel",e=>{
   zoom(e.deltaY<0?1.12:1/1.12,e.clientX,e.clientY);
 },{passive:false});
 
-function zoom(factor,x=innerWidth/2,y=innerHeight/2) {
+function zoom(factor,x=innerWidth/2,y=innerHeight/2,withSound=false) {
   const before=worldAt(x,y);
   cellSize=Math.max(3,Math.min(80,cellSize*factor));
   cameraX=x-before.x*cellSize;
   cameraY=y-before.y*cellSize;
+  if(withSound)playSound("zoom");
   render();
 }
 
@@ -1010,6 +1013,7 @@ $("clear").addEventListener("click",()=>{
 $("home").addEventListener("click",()=>{
   cameraX=innerWidth/2;
   cameraY=innerHeight/2;
+  playSound("center");
   render();
 });
 
@@ -1125,8 +1129,8 @@ window.addEventListener("keydown",async e=>{
     return;
   }
 
-  if(e.key.toLowerCase()==="q")zoom(1/1.15);
-  if(e.key.toLowerCase()==="e")zoom(1.15);
+  if(e.key.toLowerCase()==="q")zoom(1/1.15,undefined,undefined,true);
+  if(e.key.toLowerCase()==="e")zoom(1.15,undefined,undefined,true);
 
   if(e.key==="Escape") {
     pastePreview=null;
