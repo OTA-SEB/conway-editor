@@ -706,17 +706,47 @@ function parsePattern(source) {
         inside=true;sawPattern=true;activeShape=null;
       } else {
         if(shapes.has(header[2]))throw Error("Nombre de shape duplicado: "+header[2]);
-        activeShape={name:header[2],items:[]};
+        activeShape={name:header[2],items:[],transforms:[]};
         shapes.set(header[2],activeShape);
       }
       continue;
     }
     if(line==="}") {
       if(!inside&&!activeShape)throw Error("Cierre } sin un bloque abierto.");
+      if(activeShape) {
+        let items=activeShape.items;
+        if(activeShape.transforms.length) {
+          const points=[];
+          for(const item of items)
+            for(let y=0;y<item.h;y++)for(let x=0;x<item.w;x++)
+              points.push({x:item.x+x,y:item.y+y,color:item.color});
+          if(points.length) {
+            let minX=Math.min(...points.map(p=>p.x)),minY=Math.min(...points.map(p=>p.y));
+            let width=Math.max(...points.map(p=>p.x))-minX+1;
+            let height=Math.max(...points.map(p=>p.y))-minY+1;
+            let cells=points.map(p=>({...p,x:p.x-minX,y:p.y-minY}));
+            for(const transform of activeShape.transforms) {
+              if(transform.type==="mirror") {
+                cells=cells.map(cell=>({...cell,
+                  x:transform.axis==="horizontal"||transform.axis==="both"?width-1-cell.x:cell.x,
+                  y:transform.axis==="vertical"||transform.axis==="both"?height-1-cell.y:cell.y
+                }));
+              } else {
+                for(let turn=0;turn<transform.degrees/90;turn++) {
+                  cells=cells.map(cell=>({...cell,x:height-1-cell.y,y:cell.x}));
+                  [width,height]=[height,width];
+                }
+              }
+            }
+            items=cells.map(cell=>({x:cell.x,y:cell.y,w:1,h:1,color:cell.color}));
+          }
+        }
+        shapes.set(activeShape.name,{name:activeShape.name,items});
+      }
       inside=false;activeShape=null;continue;
     }
     if(!inside&&!activeShape&&line.startsWith("@color ")) {
-      const match=line.match(/^@color\\s+(\\S)\\s+(#[0-9a-fA-F]{6})$/u);
+      const match=line.match(/^@color\s+(\S)\s+(#[0-9a-fA-F]{6})$/u);
       if(!match||match[1]===".")throw Error("Directiva de color inválida: usa @color SIMBOLO #RRGGBB.");
       legend.set(match[1],match[2]);
       continue;
@@ -737,7 +767,11 @@ function parsePattern(source) {
           throw Error("Dimensiones inválidas en shape "+activeShape.name+".");
         if(!legend.has(symbol))throw Error("Símbolo sin color definido: "+symbol);
         activeShape.items.push({x,y,w,h,color:legend.get(symbol)});
-      } else throw Error("Los shapes solo admiten @cell y @rect.");
+      } else if(parts[0]==="@mirror"&&parts.length===2&&["horizontal","vertical","both"].includes(parts[1])) {
+        activeShape.transforms.push({type:"mirror",axis:parts[1]});
+      } else if(parts[0]==="@rotate"&&parts.length===2&&["90","180","270"].includes(parts[1])) {
+        activeShape.transforms.push({type:"rotate",degrees:Number(parts[1])});
+      } else throw Error("Los shapes admiten @cell, @rect, @mirror y @rotate.");
       continue;
     }
 
