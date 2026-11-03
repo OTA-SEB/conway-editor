@@ -2,8 +2,6 @@
 (() => {
 "use strict";
 const validColor = value => typeof value==="string"&&/^#[0-9a-fA-F]{6}$/.test(value);
-const MAX_CELLS=500000;
-const MAX_PATTERN_DIMENSION=2000;
 function encodePattern(data,name="Pattern") {
   const colors=[...new Set(data.cells.map(cell=>cell.color))];
   const symbols="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
