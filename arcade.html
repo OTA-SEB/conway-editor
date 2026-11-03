@@ -102,7 +102,7 @@ function saveProgress(){
  try{localStorage.setItem(PROGRESS_KEY,JSON.stringify([...won]));}catch{}
 }
 function updateProgress(){
- document.getElementById("progress").textContent=won.size+" / "+levels.length;
+ document.getElementById("progress").textContent=won.size+" / "+levels.length+(won.size===levels.length?" · ¡Completado!":"");
 }
 const key=(x,y)=>x+","+y;
 function setCell(x,y,alive){const k=key(x,y);alive?cells.add(k):cells.delete(k);}
@@ -210,6 +210,7 @@ document.getElementById("resetProgress").addEventListener("click",()=>{
  won.clear();
  try{localStorage.removeItem(PROGRESS_KEY);}catch{}
  renderLevels();
+ render();
  document.getElementById("message").className="message";
  document.getElementById("message").textContent="Progreso reiniciado.";
 });
