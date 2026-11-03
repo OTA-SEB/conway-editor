@@ -686,6 +686,7 @@ function parsePattern(source) {
   const lines=source.split(/\r?\n/);
   const legend=new Map([["O",$("color").value]]);
   const rows=[];
+  const transforms=[];
   let inside=false;
   let sawPattern=false;
 
@@ -710,6 +711,20 @@ function parsePattern(source) {
       if(!match)throw Error("Directiva de color inválida: usa @color SÍMBOLO #RRGGBB.");
       if(match[1]===".")throw Error("El punto (.) está reservado para una celda vacía.");
       legend.set(match[1],match[2]);
+      continue;
+    }
+
+    if(line.startsWith("@mirror ")) {
+      const match=line.match(/^@mirror (horizontal|vertical|both)$/);
+      if(!match)throw Error("Usa @mirror horizontal, @mirror vertical o @mirror both.");
+      transforms.push({type:"mirror",axis:match[1]});
+      continue;
+    }
+
+    if(line.startsWith("@rotate ")) {
+      const match=line.match(/^@rotate (90|180|270)$/);
+      if(!match)throw Error("La rotación debe ser @rotate 90, @rotate 180 o @rotate 270.");
+      transforms.push({type:"rotate",degrees:Number(match[1])});
       continue;
     }
 
@@ -753,7 +768,24 @@ function parsePattern(source) {
     out.push({x,y,color:legend.get(symbol)});
     if(out.length>MAX_CELLS)throw Error("El patrón supera el máximo de células vivas.");
   }));
-  return {w,h,cells:out};
+  let width=w,height=h,cells=out;
+  for(const transform of transforms) {
+    if(transform.type==="mirror") {
+      cells=cells.map(cell=>({
+        ...cell,
+        x:transform.axis==="horizontal"||transform.axis==="both"?width-1-cell.x:cell.x,
+        y:transform.axis==="vertical"||transform.axis==="both"?height-1-cell.y:cell.y
+      }));
+      continue;
+    }
+
+    const turns=transform.degrees/90;
+    for(let turn=0;turn<turns;turn++) {
+      cells=cells.map(cell=>({...cell,x:height-1-cell.y,y:cell.x}));
+      [width,height]=[height,width];
+    }
+  }
+  return {w:width,h:height,cells};
 }
 
 function startPaste(data) {
