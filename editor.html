@@ -205,7 +205,9 @@ function playSound(kind){
       pause:{frequency:420,end:280,duration:.11,wave:"triangle"},
       undo:{frequency:330,end:240,duration:.08,wave:"sine"},
       redo:{frequency:390,end:560,duration:.08,wave:"sine"},
-      tool:{frequency:700,end:540,duration:.045,wave:"triangle"}
+      tool:{frequency:700,end:540,duration:.045,wave:"triangle"},
+      fill:{frequency:280,end:460,duration:.13,wave:"sine"},
+      pattern:{frequency:520,end:820,duration:.16,wave:"triangle"}
     };
     const sound=presets[kind]||presets.paint;
     const now=audioContext.currentTime;
@@ -414,8 +416,8 @@ function beginGesture() {
   gestureChanged=true;
 }
 
-function finishGesture() {
-  if(gestureBefore&&gestureChanged){saveUndo(gestureBefore);playSound(tool==="eraser"?"erase":"paint");}
+function finishGesture(soundKind=null) {
+  if(gestureBefore&&gestureChanged){saveUndo(gestureBefore);playSound(soundKind||(tool==="eraser"?"erase":"paint"));}
   gestureBefore=null;
   gestureChanged=false;
   updateHistoryButtons();
@@ -728,7 +730,7 @@ canvas.addEventListener("pointerdown",e=>{
   if(tool==="paste"&&pastePreview) {
     beginGesture();
     placeData(pastePreview,world.x,world.y,false);
-    finishGesture();
+    finishGesture("pattern");
     pastePreview=null;
     tool="brush";
     $("toolPicker").value="brush";
@@ -739,7 +741,7 @@ canvas.addEventListener("pointerdown",e=>{
   if(pendingPattern) {
     beginGesture();
     placeData(pendingPattern,world.x,world.y,false);
-    finishGesture();
+    finishGesture("pattern");
     pendingPattern=null;
     tool="brush";
     $("toolPicker").value="brush";
@@ -750,7 +752,7 @@ canvas.addEventListener("pointerdown",e=>{
   if(tool==="bucket") {
     beginGesture();
     floodFill(world);
-    finishGesture();
+    finishGesture("fill");
     render();
     return;
   }
