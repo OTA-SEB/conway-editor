@@ -204,6 +204,8 @@ header strong{font-size:16px;letter-spacing:.2px;margin-right:8px}
 <div id="bottomRight">
   <span style="color:var(--muted);font-size:12px">No pintar</span>
   <button id="noPaint" title="Herramienta de no pintar" aria-label="No pintar">◻</button>
+  <button id="zoomOut" title="Alejar" aria-label="Alejar">−</button>
+  <button id="zoomIn" title="Acercar" aria-label="Acercar">＋</button>
 </div>
 
 <div id="codePanel">
@@ -876,7 +878,9 @@ function selectTool(next) {
 document.querySelectorAll("[data-tool]").forEach(b=>
   b.addEventListener("click",()=>selectTool(b.dataset.tool)));
 
-$("noPaint").addEventListener("click",()=>selectTool("none"));
+$("noPaint").addEventListener("click",()=>selectTool(tool==="none"?"brush":"none"));
+$("zoomOut").addEventListener("click",()=>zoom(1/1.2));
+$("zoomIn").addEventListener("click",()=>zoom(1.2));
 $("brushSize").addEventListener("input",()=>$("sizeValue").textContent=$("brushSize").value);
 canvas.addEventListener("contextmenu",e=>e.preventDefault());
 
