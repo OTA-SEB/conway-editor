@@ -14,6 +14,8 @@ Conway Studio ∞ lets you draw, edit, save, and simulate patterns in Conway's G
 
 The goal is simple: **make playing with Conway's Game of Life fun.**
 
+Try **Conway Arcade**, a mobile-friendly challenge mode where you edit patterns and solve small objectives.
+
 ## Features
 
 ### Simulation
@@ -41,6 +43,12 @@ The goal is simple: **make playing with Conway's Game of Life fun.**
 - Choose drawing tools from a single selector instead of a row of separate tool buttons.
 - Use the on-screen zoom controls and the canvas-movement tool to navigate on touch devices.
 
+### Conway Arcade
+- Three bite-sized challenges based on Conway's rules.
+- Edit a pattern, advance generations, and reach an exact population target.
+- Progress is tracked for the current session; no account or backend required.
+- Touch-friendly board and controls for mobile.
+
 ### Image converter
 - Open **Image → Conway** from the main menu.
 - Load an image from your device and convert it into a pixel pattern.
@@ -60,6 +68,7 @@ The goal is simple: **make playing with Conway's Game of Life fun.**
 | `index.html` | Main menu and saved-map library |
 | `editor.html` | Conway pattern editor and simulation |
 | `pixelizer.html` | Image-to-Conway converter |
+| `arcade.html` | Interactive Conway challenge mode |
 
 Open `index.html` to start using the project. The other pages can also be opened directly.
 
