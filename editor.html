@@ -1302,6 +1302,16 @@ if(pendingSavedMap){
   }catch(e){toast("No se pudo cargar el mapa guardado.");}
 }
 
+// Recibir un patrón enviado desde el Atlas.
+const pendingAtlasPattern=localStorage.getItem("conway:pending-atlas-pattern");
+if(pendingAtlasPattern){
+  localStorage.removeItem("conway:pending-atlas-pattern");
+  try{
+    startPaste(parsePattern(pendingAtlasPattern));
+    toast("Patrón del Atlas listo. Colócalo en el lienzo.");
+  }catch(e){toast("No se pudo importar el patrón: "+e.message);}
+}
+
 // Recibir una imagen convertida desde pixelizer.html.
 const pendingImagePattern=localStorage.getItem("conway:pending-image-pattern");
 if(pendingImagePattern){
