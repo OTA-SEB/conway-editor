@@ -96,10 +96,11 @@ Repeating these rules creates stable structures, oscillators, moving patterns, a
 
 The editor and the Conway language are kept separate:
 
-- `editor.html` owns the canvas, tools, camera, simulation, selection, and user interaction.
+- `editor.html` owns the canvas, tools, camera, selection, history, and user interaction.
 - `conway-language.js` owns Conway text serialization and parsing. It receives plain data and options; it does not read the DOM or manipulate the canvas.
+- `conway-engine.js` owns the generation rules. It receives a cell map and returns the next generation without rendering or changing the input map.
 
-This keeps language rules independent from the editor interface and makes the parser reusable by other parts of the project.
+The editor acts as the coordinator: it reads user actions, calls the language or simulation modules, and updates the canvas. The simulation engine accepts an injectable random function, which makes its color inheritance behavior controllable in tests.
 
 ## Technology
 
