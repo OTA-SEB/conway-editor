@@ -141,7 +141,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <canvas id="world"></canvas>
 
 <div id="help">
-  Izquierdo: herramienta (No pintar: mover cámara) · Derecho: mover cámara · Q/E: zoom ·
+  Izquierdo: herramienta (No pintar: mover cámara) · Derecho: mover cámara · Q/E: zoom · M: sonido ·
   Espacio: jugar · Esc: cancelar · Ctrl+Z: deshacer · Ctrl+Shift+Z: rehacer
 </div>
 
@@ -189,6 +189,13 @@ function syncSoundButton(){
   const button=$("soundToggle");
   button.textContent=soundEnabled?"🔊 Sonido":"🔇 Silencio";
   button.setAttribute("aria-pressed",String(soundEnabled));
+}
+function toggleSound(showToast=false){
+  soundEnabled=!soundEnabled;
+  try{localStorage.setItem("conway:sound",soundEnabled?"on":"off");}catch{}
+  syncSoundButton();
+  if(soundEnabled)playSound("play");
+  if(showToast)toast(soundEnabled?"Sonido activado (M).":"Sonido silenciado (M).");
 }
 function playSound(kind){
   if(!soundEnabled)return;
@@ -978,12 +985,7 @@ function togglePlay() {
   }
 }
 
-$("soundToggle").addEventListener("click",()=>{
-  soundEnabled=!soundEnabled;
-  try{localStorage.setItem("conway:sound",soundEnabled?"on":"off");}catch{}
-  syncSoundButton();
-  if(soundEnabled)playSound("play");
-});
+$("soundToggle").addEventListener("click",()=>toggleSound());
 syncSoundButton();
 $("play").addEventListener("click",togglePlay);
 $("step").addEventListener("click",nextGeneration);
@@ -1128,6 +1130,11 @@ window.addEventListener("keydown",async e=>{
   if(e.code==="Space") {
     e.preventDefault();
     togglePlay();
+    return;
+  }
+
+  if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key.toLowerCase()==="m") {
+    toggleSound(true);
     return;
   }
 
